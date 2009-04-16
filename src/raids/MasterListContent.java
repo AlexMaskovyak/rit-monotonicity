@@ -1,0 +1,36 @@
+package raids;
+
+import java.util.List;
+
+import rice.p2p.commonapi.Id;
+import rice.p2p.commonapi.NodeHandle;
+
+/**
+ * PastContent storage data structure that stores a List of NodeHandle objects
+ * pointing to MasterNodes for the file key that mapped to this entry.
+ *
+ * @author Joseph Pecoraro
+ */
+public class MasterListContent extends PastContentList<NodeHandle> {
+
+	/**
+	 * Default Constructor
+	 * Creates an Empty list of Masters.
+	 * @param myId id of the content
+	 */
+	public MasterListContent(Id myId) {
+		super(myId);
+	}
+
+
+	/**
+	 * Constructor
+	 * Initializes storage with a list of NodeHandles
+	 * @param myId id of the content
+	 * @param list list of node handles
+	 */
+	public MasterListContent(Id myId, List<NodeHandle> list) {
+		super(myId, list);
+	}
+
+}
