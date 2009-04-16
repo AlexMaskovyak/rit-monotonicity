@@ -1,22 +1,16 @@
 package raids;
 
 import java.util.List;
-import java.util.Vector;
 
 import rice.p2p.commonapi.Id;
-import rice.p2p.past.ContentHashPastContent;
 
 /**
- * PastContent storage data structure that stores
- * a User's List of Files.
+ * PastContent storage data structure that stores a User's List of Files,
+ * which are PersonalFileInfo objects.
  *
  * @author Joseph Pecoraro
  */
-public class PersonalFileListContent extends ContentHashPastContent {
-
-	/** The content of the message */
-	private List<PersonalFileInfo> m_list;
-
+public class PersonalFileListContent extends PastContentList<PersonalFileInfo> {
 
 	/**
 	 * Default Constructor
@@ -25,9 +19,7 @@ public class PersonalFileListContent extends ContentHashPastContent {
 	 */
 	public PersonalFileListContent(Id myId) {
 		super(myId);
-		m_list = new Vector<PersonalFileInfo>();
 	}
-
 
 	/**
 	 * Constructor
@@ -36,37 +28,7 @@ public class PersonalFileListContent extends ContentHashPastContent {
 	 * @param list list of files
 	 */
 	public PersonalFileListContent(Id myId, List<PersonalFileInfo> list) {
-		super(myId);
-		m_list = new Vector<PersonalFileInfo>();
-		if (list != null) {
-			m_list.addAll(list);
-		}
-	}
-
-
-	/**
-	 * Access to the list of files
-	 * @return the list of files
-	 */
-	public List<PersonalFileInfo> getList() {
-		return m_list;
-	}
-
-
-	/**
-	 * Replace the list of files
-	 * @param list new list of files
-	 */
-	public void setList(List<PersonalFileInfo> list) {
-		m_list = list;
-	}
-
-
-	/**
-	 * For Debugging.
-	 */
-	public String toString() {
-		return "PersonalFileListContent: " + m_list.toString();
+		super(myId, list);
 	}
 
 }
