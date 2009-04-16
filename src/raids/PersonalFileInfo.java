@@ -1,9 +1,11 @@
 package raids;
 
+import java.io.Serializable;
+
 /**
  * Data Structure representing a File a User has uploaded
  */
-public class PersonalFileInfo {
+public class PersonalFileInfo implements Serializable {
 
 	/** File Name */
 	private String m_name;
