@@ -1,9 +1,6 @@
 /*
  * Chunker.java
  *
- * Version:
- * 		$Revision$
- *
  */
 
 package chunker;
@@ -26,7 +23,7 @@ public class Chunker {
 		// chunk("test.txt", 3, 3);
 		String path = "/Users/kevincheek/Desktop/t/";
 	//	chunk(path, "test.txt", 5);
-	//	chunk(path, "monalisa.jpg", 5);
+		chunk(path, "monalisa.jpg", 5);
 		String[] fileChunks = new String[5];
 		for( int i=0; i < 5; i++){
 	//		fileChunks[i] = i+"_"+"test.txt";
@@ -115,7 +112,7 @@ public class Chunker {
 					if( fis[i] != null){
 						block[i] = fis[i].read();
 						if( block[i] >= 0){
-							pData = (block[i] ^ pData);
+							pData = block[i] ^ pData;
 							System.out.println("Reading: "+ block[i] + " i: "+ i + " pData: "+ pData);
 						}else{
 							done = true;
