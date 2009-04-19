@@ -1,34 +1,50 @@
+/*
+ * Chunker.java
+ *
+ * Version:
+ * 		$Id$
+ *
+ */
+
 package chunker;
 
 import java.io.*;
 
 /**
- * A file splitter based on raid 5
+ * A file splitter based on raid 5 like XOR'ing
+ *
  * @author Kevin Cheek
- *
- *
  */
 public class Chunker {
 
+	/*
+	 * Test the chunker class
+	 */
 	public static void main() {
 		// Chunker chk = new Chunker("/Users/kevincheek/Desktop/monalisa.jpg",
 		// 3, 3);
 		// chunk("test.txt", 3, 3);
 		String path = "/Users/kevincheek/Desktop/t/";
-	//	raddChunk(path, "test.txt", 5);
-	//	raddChunk(path, "monalisa.jpg", 5);
+	//	chunk(path, "test.txt", 5);
+	//	chunk(path, "monalisa.jpg", 5);
 		String[] fileChunks = new String[5];
 		for( int i=0; i < 5; i++){
 	//		fileChunks[i] = i+"_"+"test.txt";
 			fileChunks[i] = i+"_"+"monalisa.jpg";
 		}
-		reassemble("/Users/kevincheek/Desktop/t/", fileChunks, "/Users/kevincheek/Desktop/t/", "monalisaOut.jpg");
-	//	reassemble("/Users/kevincheek/Desktop/t/", fileChunks, "/Users/kevincheek/Desktop/t/", "testOut.txt");
+		reassemble(path, fileChunks, path, "monalisaOut.jpg");
+	//	reassemble(path, fileChunks, path, "testOut.txt");
 
 	}
 
-
-	public static void raddChunk(String path, String fName, int m) {
+	/**
+	 * This function will split the file into m chunks.
+	 *
+	 * @param path 	The directory for storage of the input and output
+	 * @param fName	The file name
+	 * @param m		The number of chunks. (3-6 recommended size)
+	 */
+	public static void chunk(String path, String fName, int m) {
 		try{
 			File file = new File(path + fName);
 			FileInputStream fi = new FileInputStream(file);
@@ -61,8 +77,14 @@ public class Chunker {
 	}
 
 	/**
+	 * Reassemble the file chunks into a single file.
 	 * FileChunks must be in order from 0 -> M with null being given to missing
-	 * files
+	 * files.
+	 *
+	 * @param iPath 		Input file path
+	 * @param fileChunks	Input file names
+	 * @param oPath			Output file path
+	 * @param outputFile	Output file name
 	 */
 	public static void reassemble(String iPath, String[] fileChunks, String oPath,
 			String outputFile) {
@@ -113,11 +135,14 @@ public class Chunker {
 				}
 			}
 
-		}catch( FileNotFoundException e ){
-			e.printStackTrace();
 		}catch( IOException e ){
 			e.printStackTrace();
 		}
 
 	}
 }
+
+/*
+ * Revisions:
+ * 		$Log$
+ */
