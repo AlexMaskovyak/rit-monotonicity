@@ -30,6 +30,10 @@ public class Chunker {
 	}
 
 	public Chunker() {
+
+
+
+
 		// setupTables( 4 );
 
 	/*
@@ -44,9 +48,9 @@ public class Chunker {
 		String[] fileChunks = new String[5];
 		for( int i=0; i < 5; i++){
 	//		fileChunks[i] = i+"_"+"test.txt";
-			fileChunks[i] = i+"_"+"monalisa.jpg";
+		//	fileChunks[i] = i+"_"+"monalisa.jpg";
 		}
-		reassemble("/Users/kevincheek/Desktop/t/", fileChunks, "/Users/kevincheek/Desktop/t/", "monalisaOut.jpg");
+	//	reassemble("/Users/kevincheek/Desktop/t/", fileChunks, "/Users/kevincheek/Desktop/t/", "monalisaOut.jpg");
 	//	reassemble("/Users/kevincheek/Desktop/t/", fileChunks, "/Users/kevincheek/Desktop/t/", "testOut.txt");
 	}
 
@@ -57,23 +61,17 @@ public class Chunker {
 		try{
 			File file = new File(path + fName);
 			FileInputStream fi = new FileInputStream(file);
-			// long size = file.length();
-			// long chunkSize = size / m;
 			FileOutputStream fos[] = new FileOutputStream[m];
+			int block;
+			int parity = m;
+			int pData = 0;
+
 			for( int i = 0; i < m; i++ ){
 				fos[ i ] = new FileOutputStream(path + i + "_" + fName);
 			}
-			// for( int i=0; i < m; i++){
-			int block;
-	//		long written = 0;
-			int parity = m;
-			int pData = 0;
 			while( fi.available() > 0 ){
 				pData = 0;
 				parity = ++parity%m;
-		/*		parity--;
-				if( parity < 0 )
-					parity = m - 1;*/
 				for( int i = 0; i < m; i++ ){
 					if( i != parity && fi.available() > 0 ){
 						block = fi.read();
@@ -81,11 +79,8 @@ public class Chunker {
 						pData = pData ^ block;
 						System.out.println("data: " + (char)block + " i: "+ i);
 					}
-//					written++;
 				}
-	//			System.out.println("Parity: " + parity + " written: " + written);
 				fos[ parity ].write(pData);
-
 			}
 		}catch( FileNotFoundException e ){
 			e.printStackTrace();
@@ -100,11 +95,17 @@ public class Chunker {
 	 */
 	public void reassemble(String iPath, String[] fileChunks, String oPath,
 			String outputFile) {
+
 		try{
 			int m = fileChunks.length;
+			int block[] = new int[m];
+			int pData = 0;
+			boolean done = false;
+			int regenerate = -1;
+			int parity = m;
 			FileOutputStream fo = new FileOutputStream(oPath + outputFile);
-
 			FileInputStream fis[] = new FileInputStream[m];
+
 			for( int i = 0; i < m; i++ ){
 				try{
 					fis[ i ] = new FileInputStream(iPath + fileChunks[ i ]);
@@ -112,18 +113,10 @@ public class Chunker {
 					fis[i] = null;
 				}
 			}
-			int block[] = new int[m];
 
-			int pData = 0;
-			boolean done = false;
-			int regenerate = -1;
-			int parity = m;
 			while(!done){
 				pData = 0;
 				parity = ++parity%m;
-		/*		parity--;
-				if( parity < 0 )
-					parity = fileChunks.length - 1;*/
 				for( int i=0; i < m; i++){
 					if( fis[i] != null){
 						block[i] = fis[i].read();
