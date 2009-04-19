@@ -13,7 +13,6 @@ import raids.PersonalFileListHelper;
 import rice.Continuation;
 import rice.environment.Environment;
 import rice.p2p.commonapi.Id;
-import rice.p2p.commonapi.NodeHandle;
 import rice.p2p.past.*;
 import rice.pastry.*;
 import rice.pastry.commonapi.PastryIdFactory;
@@ -277,7 +276,6 @@ public class PastExampleSendingLists {
 	/**
 	 * Creates nodes with MemoryStorage
 	 */
-	@SuppressWarnings("deprecation")
 	public void createNodes(int bindport, InetSocketAddress bootaddress, int numNodes, final Environment env) throws Exception {
 
 		// Generate the NodeIds Randomly
@@ -289,12 +287,10 @@ public class PastExampleSendingLists {
 		// loop to construct the nodes/apps
 		for (int curNode = 0; curNode < numNodes; curNode++) {
 
-			// This will return null if we there is no node at that location
-			NodeHandle bootHandle = ((SocketPastryNodeFactory) factory).getNodeHandle(bootaddress);
-
 			// construct a node, passing the null boothandle on the first loop will
 			// cause the node to start its own ring
-			PastryNode node = factory.newNode((rice.pastry.NodeHandle) bootHandle);
+			PastryNode node = factory.newNode();
+			node.boot(bootaddress);
 
 			// the node may require sending several messages to fully boot into the ring
 			synchronized(node) {
