@@ -14,26 +14,6 @@ import java.io.*;
  */
 public class Chunker {
 
-	/*
-	 * Test the chunker class
-	 */
-	public static void main() {
-		// Chunker chk = new Chunker("/Users/kevincheek/Desktop/monalisa.jpg",
-		// 3, 3);
-		// chunk("test.txt", 3, 3);
-		String path = "/Users/kevincheek/Desktop/t/";
-	//	chunk(path, "test.txt", 5);
-		chunk(path, "monalisa.jpg", 5);
-		String[] fileChunks = new String[5];
-		for( int i=0; i < 5; i++){
-	//		fileChunks[i] = i+"_"+"test.txt";
-			fileChunks[i] = i+"_"+"monalisa.jpg";
-		}
-		reassemble(path, fileChunks, path, "monalisaOut.jpg");
-	//	reassemble(path, fileChunks, path, "testOut.txt");
-
-	}
-
 	/**
 	 * This function will split the file into m chunks.
 	 *
@@ -61,7 +41,7 @@ public class Chunker {
 						block = fi.read();
 						fos[ i ].write(block);
 						pData = pData ^ block;
-						System.out.println("data: " + (char)block + " i: "+ i);
+		//				System.out.println("data: " + (char)block + " i: "+ i);
 					}
 				}
 				fos[ parity ].write(pData);
@@ -113,7 +93,7 @@ public class Chunker {
 						block[i] = fis[i].read();
 						if( block[i] >= 0){
 							pData = block[i] ^ pData;
-							System.out.println("Reading: "+ block[i] + " i: "+ i + " pData: "+ pData);
+		//					System.out.println("Reading: "+ block[i] + " i: "+ i + " pData: "+ pData);
 						}else{
 							done = true;
 						}
@@ -121,7 +101,7 @@ public class Chunker {
 				}
 
 				if( regenerate >= 0){
-					System.out.println("Regenerating: " + (char)pData);
+	//				System.out.println("Regenerating: " + (char)pData);
 					block[regenerate] = pData;
 				}
 
