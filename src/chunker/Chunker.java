@@ -10,14 +10,17 @@ import java.io.*;
  * Reed Solomon Encoder/Decoder by Henry Minsky
  */
 public class Chunker {
-
+/*
 	private short w; // W size 16bits
 
-	/*
-	 * private int m=3; private int n=3; private static final int prim_poly_4 =
-	 * 023; private static final int prim_poly_8 = 0435; private static final
-	 * int prim_poly_16 = 0210013; private static short gflog[], gfilog[];
-	 * private static int Vandermonde[][];
+
+	private int			  m			= 3;
+	private int			  n			= 3;
+	private static final int prim_poly_4  = 023;
+	private static final int prim_poly_8  = 0435;
+	private static final int prim_poly_16 = 0210013;
+	private static short	 gflog[], gfilog[];
+	private static int	   Vandermonde[][];
 	 */
 
 	public static void main() {
@@ -29,18 +32,18 @@ public class Chunker {
 	public Chunker() {
 		// setupTables( 4 );
 
-		/*
-		 * for( int i=0; i < gflog.length; i++){ System.out.print(gflog[i] + "
-		 * "); } System.out.println(); for( int i=0; i < gfilog.length; i++){
-		 * System.out.print(gfilog[i] + " "); }
-		 */
+	/*
+		  for( int i=0; i < gflog.length; i++){ System.out.print(gflog[i] + "
+		  "); } System.out.println(); for( int i=0; i < gfilog.length; i++){
+		  System.out.print(gfilog[i] + " "); }*/
+
 		// chunk("test.txt", 3, 3);
 		String path = "/Users/kevincheek/Desktop/t/";
 	//	raddChunk(path, "test.txt", 5);
 	//	raddChunk(path, "monalisa.jpg", 5);
 		String[] fileChunks = new String[5];
 		for( int i=0; i < 5; i++){
-		//	fileChunks[i] = i+"_"+"test.txt";
+	//		fileChunks[i] = i+"_"+"test.txt";
 			fileChunks[i] = i+"_"+"monalisa.jpg";
 		}
 		reassemble("/Users/kevincheek/Desktop/t/", fileChunks, "/Users/kevincheek/Desktop/t/", "monalisaOut.jpg");
@@ -62,19 +65,15 @@ public class Chunker {
 			}
 			// for( int i=0; i < m; i++){
 			int block;
-			long written = 0;
-			// int curBlock=0;
-			// boolean writtenParity = false;
+	//		long written = 0;
 			int parity = m;
-
-			// long chunkSize = size / m;
 			int pData = 0;
 			while( fi.available() > 0 ){
-
 				pData = 0;
-				parity--;
+				parity = ++parity%m;
+		/*		parity--;
 				if( parity < 0 )
-					parity = m - 1;
+					parity = m - 1;*/
 				for( int i = 0; i < m; i++ ){
 					if( i != parity && fi.available() > 0 ){
 						block = fi.read();
@@ -82,13 +81,12 @@ public class Chunker {
 						pData = pData ^ block;
 						System.out.println("data: " + (char)block + " i: "+ i);
 					}
-					written++;
+//					written++;
 				}
-				System.out.println("Parity: " + parity + " written: " + written);
+	//			System.out.println("Parity: " + parity + " written: " + written);
 				fos[ parity ].write(pData);
 
 			}
-			// }
 		}catch( FileNotFoundException e ){
 			e.printStackTrace();
 		}catch( IOException e ){
@@ -121,9 +119,10 @@ public class Chunker {
 			int parity = fileChunks.length;
 			while(!done){
 				pData = 0;
-				parity--;
+				parity = ++parity%fileChunks.length;
+		/*		parity--;
 				if( parity < 0 )
-					parity = fileChunks.length - 1;
+					parity = fileChunks.length - 1;*/
 				for( int i=0; i < fileChunks.length; i++){
 					if( fis[i] != null){
 						block[i] = fis[i].read();
