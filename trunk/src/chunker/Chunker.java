@@ -2,45 +2,17 @@ package chunker;
 
 import java.io.*;
 
-/*
+/**
+ * A file splitter based on raid 5
  * @author Kevin Cheek
  *
  *
- * Adapted from Reed-soloman coding paper and
- * Reed Solomon Encoder/Decoder by Henry Minsky
  */
 public class Chunker {
-/*
-	private short w; // W size 16bits
-
-
-	private int			  m			= 3;
-	private int			  n			= 3;
-	private static final int prim_poly_4  = 023;
-	private static final int prim_poly_8  = 0435;
-	private static final int prim_poly_16 = 0210013;
-	private static short	 gflog[], gfilog[];
-	private static int	   Vandermonde[][];
-	 */
 
 	public static void main() {
 		// Chunker chk = new Chunker("/Users/kevincheek/Desktop/monalisa.jpg",
 		// 3, 3);
-
-	}
-
-	public Chunker() {
-
-
-
-
-		// setupTables( 4 );
-
-	/*
-		  for( int i=0; i < gflog.length; i++){ System.out.print(gflog[i] + "
-		  "); } System.out.println(); for( int i=0; i < gfilog.length; i++){
-		  System.out.print(gfilog[i] + " "); }*/
-
 		// chunk("test.txt", 3, 3);
 		String path = "/Users/kevincheek/Desktop/t/";
 	//	raddChunk(path, "test.txt", 5);
@@ -48,16 +20,15 @@ public class Chunker {
 		String[] fileChunks = new String[5];
 		for( int i=0; i < 5; i++){
 	//		fileChunks[i] = i+"_"+"test.txt";
-		//	fileChunks[i] = i+"_"+"monalisa.jpg";
+			fileChunks[i] = i+"_"+"monalisa.jpg";
 		}
-	//	reassemble("/Users/kevincheek/Desktop/t/", fileChunks, "/Users/kevincheek/Desktop/t/", "monalisaOut.jpg");
+		reassemble("/Users/kevincheek/Desktop/t/", fileChunks, "/Users/kevincheek/Desktop/t/", "monalisaOut.jpg");
 	//	reassemble("/Users/kevincheek/Desktop/t/", fileChunks, "/Users/kevincheek/Desktop/t/", "testOut.txt");
+
 	}
 
-	public void raddChunk(String path, String fName, int m) {
-		// String path = "/Users/kevincheek/Desktop/t/";
-		System.out.println("test");
 
+	public static void raddChunk(String path, String fName, int m) {
 		try{
 			File file = new File(path + fName);
 			FileInputStream fi = new FileInputStream(file);
@@ -89,11 +60,11 @@ public class Chunker {
 		}
 	}
 
-	/*
+	/**
 	 * FileChunks must be in order from 0 -> M with null being given to missing
 	 * files
 	 */
-	public void reassemble(String iPath, String[] fileChunks, String oPath,
+	public static void reassemble(String iPath, String[] fileChunks, String oPath,
 			String outputFile) {
 
 		try{
@@ -111,6 +82,7 @@ public class Chunker {
 					fis[ i ] = new FileInputStream(iPath + fileChunks[ i ]);
 				}catch( FileNotFoundException e ){
 					fis[i] = null;
+					regenerate = i;
 				}
 			}
 
@@ -126,8 +98,6 @@ public class Chunker {
 						}else{
 							done = true;
 						}
-					}else if( fis[i] == null){
-						regenerate = i;
 					}
 				}
 
@@ -150,66 +120,4 @@ public class Chunker {
 		}
 
 	}
-
-
-/*	  public void chunk(String fName, int m, int n) {
-		String path = "/Users/kevincheek/Desktop/t/";
-		System.out.println("test");
-		try{
-			File file = new File(path + fName);
-			FileInputStream fi = new FileInputStream(file);
-			long size = file.length();
-			FileOutputStream fos;
-			long chunkSize = size / m;
-			for( int i = 0; i < m; i++ ){
-				fos = new FileOutputStream(path + i + "_" + fName);
-				long written = 0;
-				while( fi.available() > 0 && written < chunkSize ){
-					fos.write(fi.read());
-					written++;
-					System.out.println("Writing");
-				}
-			}
-		}catch( FileNotFoundException e ){
-			e.printStackTrace();
-		}catch( IOException e ){
-			e.printStackTrace();
-		}
-	}
-
-	public String[] Split() {
-		return null;
-	}
-
-	private int setupTables(int w) {
-		int b, log, x_to_w, prim_poly;
-		switch( w ){
-			case 4:
-				prim_poly = prim_poly_4;
-				break;
-			case 8:
-				prim_poly = prim_poly_8;
-				break;
-			case 16:
-				prim_poly = prim_poly_16;
-				break;
-			default:
-				return -1;
-		}
-		x_to_w = 1 << w;
-		System.out.println("x to w: " + x_to_w);
-		gflog = new short[x_to_w];
-		gfilog = new short[x_to_w];
-		b = 1;
-		for( log = 0; log < x_to_w - 1; log++ ){
-			System.out.println("log: " + log);
-			gflog[ b ] = (short) log;
-			gfilog[ log ] = (short) b;
-			b = b << 1;
-			if( (b & x_to_w) != 0 )
-				b = b ^ prim_poly;
-		}
-		return 0;
-	}*/
-
 }
