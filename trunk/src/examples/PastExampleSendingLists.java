@@ -26,7 +26,7 @@ public class PastExampleSendingLists {
 	/**
 	 * this will keep track of our Past applications
 	 */
-	Vector apps = new Vector();
+	Vector<Past> apps = new Vector<Past>();
 
 	/**
 	 * Number of nodes
@@ -138,14 +138,14 @@ public class PastExampleSendingLists {
 		System.out.println("Inserting " + pfl.toString() + " at node " + fakeApp.getLocalNodeHandle());
 
 		// Make the Insertion
-		fakeApp.insert(pfl, new Continuation() {
+		fakeApp.insert(pfl, new Continuation<Boolean[], Exception>() {
 
 			public void receiveException(Exception e) {
 				System.out.println("Error storing FAKE content");
 				e.printStackTrace();
 			}
 
-			public void receiveResult(Object res) {
+			public void receiveResult(Boolean[] res) {
 				Boolean[] results = ((Boolean[]) res);
 				int numSuccess = 0;
 				for (int i = 0; i < results.length; i++) {
@@ -176,8 +176,8 @@ public class PastExampleSendingLists {
 		System.out.println();
 
 		// Lookup the FAKE storage from the original Node
-		originatingClient.lookup(storageId, new Continuation() {
-			public void receiveResult(Object result) {
+		originatingClient.lookup(storageId, new Continuation<PastContent, Exception>() {
+			public void receiveResult(PastContent result) {
 				System.out.println("Successfully looked up storage for FAKE key:");
 				System.out.println(result.toString());
 			}
@@ -220,14 +220,14 @@ public class PastExampleSendingLists {
 		System.out.println("FAKE: Inserting " + mlc.toString() + " at node " + randomApp.getLocalNodeHandle());
 
 		// Make the Insertion
-		originatingClient.insert(mlc, new Continuation() {
+		originatingClient.insert(mlc, new Continuation<Boolean[], Exception>() {
 
 			public void receiveException(Exception e) {
 				System.out.println("Error storing MASTER content");
 				e.printStackTrace();
 			}
 
-			public void receiveResult(Object res) {
+			public void receiveResult(Boolean[] res) {
 				Boolean[] results = ((Boolean[]) res);
 				int numSuccess = 0;
 				for (int i = 0; i < results.length; i++) {
@@ -258,8 +258,8 @@ public class PastExampleSendingLists {
 		System.out.println();
 
 		// Lookup the FAKE storage from the original Node
-		originatingClient.lookup(storageId, new Continuation() {
-			public void receiveResult(Object result) {
+		originatingClient.lookup(storageId, new Continuation<PastContent, Exception>() {
+			public void receiveResult(PastContent result) {
 				System.out.println("Successfully looked up storage for MASTER list on \"a.txt\":");
 				System.out.println(result.toString());
 			}
