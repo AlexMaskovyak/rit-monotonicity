@@ -2,7 +2,7 @@
  * Chunker.java
  *
  * Version:
- * 		$Id$
+ * 		$Revision$
  *
  */
 
@@ -141,8 +141,3 @@ public class Chunker {
 
 	}
 }
-
-/*
- * Revisions:
- * 		$Log$
- */
