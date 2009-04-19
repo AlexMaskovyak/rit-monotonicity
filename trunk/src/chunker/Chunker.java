@@ -101,34 +101,35 @@ public class Chunker {
 	public void reassemble(String iPath, String[] fileChunks, String oPath,
 			String outputFile) {
 		try{
+			int m = fileChunks.length;
 			FileOutputStream fo = new FileOutputStream(oPath + outputFile);
 
-			FileInputStream fis[] = new FileInputStream[fileChunks.length];
-			for( int i = 0; i < fileChunks.length; i++ ){
+			FileInputStream fis[] = new FileInputStream[m];
+			for( int i = 0; i < m; i++ ){
 				try{
 					fis[ i ] = new FileInputStream(iPath + fileChunks[ i ]);
 				}catch( FileNotFoundException e ){
 					fis[i] = null;
 				}
 			}
-			int block[] = new int[fileChunks.length];
+			int block[] = new int[m];
 
 			int pData = 0;
 			boolean done = false;
 			int regenerate = -1;
-			int parity = fileChunks.length;
+			int parity = m;
 			while(!done){
 				pData = 0;
-				parity = ++parity%fileChunks.length;
+				parity = ++parity%m;
 		/*		parity--;
 				if( parity < 0 )
 					parity = fileChunks.length - 1;*/
-				for( int i=0; i < fileChunks.length; i++){
+				for( int i=0; i < m; i++){
 					if( fis[i] != null){
 						block[i] = fis[i].read();
 						if( block[i] >= 0){
 							pData = (block[i] ^ pData);
-							System.out.println("Reading: "+ block[i] + " I: "+ i + " pData: "+ pData);
+							System.out.println("Reading: "+ block[i] + " i: "+ i + " pData: "+ pData);
 						}else{
 							done = true;
 						}
@@ -142,7 +143,7 @@ public class Chunker {
 					block[regenerate] = pData;
 				}
 
-				for(int i=0; i < block.length; i++){
+				for(int i=0; i < m; i++){
 					if( i != parity && block[i] >= 0){
 						fo.write(block[i]);
 					}
