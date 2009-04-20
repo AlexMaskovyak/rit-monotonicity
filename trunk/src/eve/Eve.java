@@ -54,7 +54,50 @@ class EveHandler extends Thread {
  *
  * @author Joseph Pecoraro
  */
-public class Eve {
+public class Eve extends Thread {
+
+	/** The Server Socket */
+	private ServerSocket m_server;
+
+
+	/**
+	 * Provide a Socket to Listen to
+	 * @param server the initialized server socket
+	 */
+	public Eve(ServerSocket server) {
+		m_server = server;
+	}
+
+
+	/**
+	 * Get the Port Eve is Listening on
+	 */
+	public int getPort() {
+		return m_server.getLocalPort();
+	}
+
+
+	/**
+	 * Run Eve
+	 */
+	public void run() {
+
+        // Continually Spawn Handlers
+        while (true) {
+        	try {
+				Socket sock = m_server.accept();
+	        	EveHandler handler = new EveHandler(sock);
+	        	handler.setDaemon(true);
+	        	handler.start();
+        	} catch (IOException e) {
+ 				e.printStackTrace();
+ 				System.exit(2);
+ 			}
+        }
+
+	}
+
+
 
 	/**
 	 * Driver for the Eve Server
@@ -85,19 +128,8 @@ public class Eve {
 		// Output the port we are listening on
         System.out.println( server.getLocalPort() );
 
-
-        // Continually Spawn Handlers
-        while (true) {
-        	try {
-				Socket sock = server.accept();
-	        	EveHandler handler = new EveHandler(sock);
-	        	handler.setDaemon(true);
-	        	handler.start();
-        	} catch (IOException e) {
- 				e.printStackTrace();
- 				System.exit(2);
- 			}
-        }
+        // Create and run Eve
+        new Eve(server).start();
 
 	}
 
