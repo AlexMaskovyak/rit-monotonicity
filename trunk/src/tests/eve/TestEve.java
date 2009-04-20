@@ -50,9 +50,12 @@ public class TestEve extends TestCase {
 	 */
 	public void testReporter() {
 		EveReporter reporter = new EveReporter("localhost", eve_port);
+		EveReporter reporter2 = new EveReporter("localhost", eve_port);
 		reporter.log("junit", "eve", "test", "Unit Test Message");
-		reporter.log( new EveMessage("junit", "eve", "test", "Unit Test Message 2") );
+		reporter2.log("junit2", "eve", "test", "Unit Test Message");
+		reporter.log( new EveMessage("junit", "eve", "test", "Unit Test Message") );
 		reporter.close();
+		reporter2.close();
 		assertTrue(true);
 	}
 
