@@ -9,6 +9,9 @@ public class EveReporter {
 	/** Is this connected */
 	private boolean m_connected;
 
+	/** The socket connection */
+	private Socket m_socket;
+
 	/** Stream out to the Eve */
 	private ObjectOutputStream m_out;
 
@@ -31,8 +34,8 @@ public class EveReporter {
 	public EveReporter(String host, int port) {
 		m_connected = false;
 		try {
-			Socket sock = new Socket(host, port);
-			m_out = new ObjectOutputStream( sock.getOutputStream() );
+			m_socket = new Socket(host, port);
+			m_out = new ObjectOutputStream( m_socket.getOutputStream() );
 			m_connected = true;
 		} catch (Exception e) {
 			System.err.println("Could Not Connect to Eve.");
@@ -56,6 +59,18 @@ public class EveReporter {
 		if ( m_connected ) {
 			try {
 				m_out.writeObject(msg);
+			} catch (IOException e) {}
+		}
+	}
+
+	/**
+	 * Close the connection to Eve
+	 */
+	public void close() {
+		if ( m_connected && m_socket != null) {
+			try {
+				m_out.close();
+				m_socket.close();
 			} catch (IOException e) {}
 		}
 	}
