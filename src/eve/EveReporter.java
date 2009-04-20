@@ -87,6 +87,7 @@ public class EveReporter {
 		System.out.print("Send Eve a Message: ");
 		String input = (new java.util.Scanner(System.in)).nextLine();
 		reporter.log("joe", "eve", "tty", input);
+		reporter.close();
 	}
 
 }
