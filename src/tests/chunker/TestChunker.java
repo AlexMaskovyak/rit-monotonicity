@@ -19,7 +19,7 @@ import junit.framework.TestCase;
 public class TestChunker extends TestCase {
 
 	/** Configuration Option */
-	private static boolean DELETE_COMPONENTS = false;
+	private static boolean DELETE_COMPONENTS = true;
 
 	/** Path to the directory (this) where the test files are stored. */
 	private static final String TEST_PATH = "src/tests/chunker/";
