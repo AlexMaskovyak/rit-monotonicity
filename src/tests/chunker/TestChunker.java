@@ -18,6 +18,9 @@ import junit.framework.TestCase;
  */
 public class TestChunker extends TestCase {
 
+	/** Configuration Option */
+	private static boolean DELETE_COMPONENTS = false;
+
 	/** Path to the directory (this) where the test files are stored. */
 	private static final String TEST_PATH = "src/tests/chunker/";
 
@@ -28,7 +31,7 @@ public class TestChunker extends TestCase {
 	private static final String IMAGE_FILENAME = "monalisa.jpg";
 
 	/** Reassembled Suffix */
-	private static final String REASSEMBLE_SUFFIX = ".reassemble";
+	private static final String REASSEMBLED_PREFIX = "reassembled-";
 
 
 	/**
@@ -67,18 +70,21 @@ public class TestChunker extends TestCase {
 	    assertEquals(numChunks, fileChunks.length);
 
 		// Reassemble (assume fileChunks are in sorted order)
-	    Chunker.reassemble(TEST_PATH, fileChunks, TEST_PATH, TEXT_FILENAME + REASSEMBLE_SUFFIX);
+	    Chunker.reassemble(TEST_PATH, fileChunks, TEST_PATH, REASSEMBLED_PREFIX + TEXT_FILENAME);
 
 		// Verify the two files are equivalent
 	    String orig = TEST_PATH + TEXT_FILENAME;
-	    String reassembled = TEST_PATH + TEXT_FILENAME + REASSEMBLE_SUFFIX;
+	    String reassembled = TEST_PATH + REASSEMBLED_PREFIX + TEXT_FILENAME;
 	    assertTrue( compareFiles(orig, reassembled) );
 
-	    // Delete Chunks (not .reassemble)
-	    for (int i = 0; i < fileChunks.length; i++) {
-			File f = new File(TEST_PATH + fileChunks[i]);
-			f.delete();
-		}
+	    // Delete Chunks (not final reassembled part)
+	    if ( DELETE_COMPONENTS ) {
+		    for (int i = 0; i < fileChunks.length; i++) {
+				File f = new File(TEST_PATH + fileChunks[i]);
+				f.delete();
+			}
+	    }
+
 
 	}
 
@@ -119,18 +125,20 @@ public class TestChunker extends TestCase {
 	    assertEquals(numChunks, fileChunks.length);
 
 		// Reassemble (assume fileChunks are in sorted order)
-	    Chunker.reassemble(TEST_PATH, fileChunks, TEST_PATH, IMAGE_FILENAME + REASSEMBLE_SUFFIX);
+	    Chunker.reassemble(TEST_PATH, fileChunks, TEST_PATH, REASSEMBLED_PREFIX + IMAGE_FILENAME);
 
 		// Verify the two files are equivalent
 	    String orig = TEST_PATH + IMAGE_FILENAME;
-	    String reassembled = TEST_PATH + IMAGE_FILENAME + REASSEMBLE_SUFFIX;
+	    String reassembled = TEST_PATH + REASSEMBLED_PREFIX + IMAGE_FILENAME;
 	    assertTrue( compareFiles(orig, reassembled) );
 
-	    // Delete Chunks (not .reassemble)
-	    for (int i = 0; i < fileChunks.length; i++) {
-			File f = new File(TEST_PATH + fileChunks[i]);
-			f.delete();
-		}
+	    // Delete Chunks (not final reassembled part)
+	    if ( DELETE_COMPONENTS ) {
+		    for (int i = 0; i < fileChunks.length; i++) {
+				File f = new File(TEST_PATH + fileChunks[i]);
+				f.delete();
+			}
+	    }
 
 	}
 
