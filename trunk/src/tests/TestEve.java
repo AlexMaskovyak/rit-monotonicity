@@ -1,4 +1,4 @@
-package tests.eve;
+package tests;
 
 import java.net.ServerSocket;
 
