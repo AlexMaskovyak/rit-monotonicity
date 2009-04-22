@@ -276,7 +276,7 @@ public class PastExampleSendingLists {
 	/**
 	 * Creates nodes with MemoryStorage
 	 */
-	public void createNodes(int bindport, InetSocketAddress bootaddress, int numNodes, final Environment env) throws Exception {
+	public void createNodes(int bindport, InetSocketAddress bootaddress, int n, final Environment env) throws Exception {
 
 		// Generate the NodeIds Randomly
 		NodeIdFactory nidFactory = new RandomNodeIdFactory(env);
@@ -285,7 +285,7 @@ public class PastExampleSendingLists {
 		PastryNodeFactory factory = new SocketPastryNodeFactory(nidFactory, bindport, env);
 
 		// loop to construct the nodes/apps
-		for (int curNode = 0; curNode < numNodes; curNode++) {
+		for (int curNode = 0; curNode < n; curNode++) {
 
 			// construct a node, passing the null boothandle on the first loop will
 			// cause the node to start its own ring
