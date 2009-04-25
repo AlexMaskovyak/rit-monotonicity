@@ -1,3 +1,4 @@
+package edu.uci.ics.jung.algorithms.layout;
 /*
  * Copyright (c) 2003, the JUNG Project and the Regents of the University of
  * California All rights reserved.
@@ -8,7 +9,6 @@
  */
 
 
-package edu.uci.ics.jung.samples;
 import edu.uci.ics.jung.algorithms.layout.AbstractLayout;
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
 import edu.uci.ics.jung.algorithms.layout.Layout;
@@ -20,6 +20,7 @@ import edu.uci.ics.jung.algorithms.util.IterativeContext;
 import edu.uci.ics.jung.graph.DirectedSparseMultigraph;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.ObservableGraph;
+import edu.uci.ics.jung.graph.UndirectedSparseMultigraph;
 import edu.uci.ics.jung.graph.event.GraphEvent;
 import edu.uci.ics.jung.graph.event.GraphEventListener;
 import edu.uci.ics.jung.graph.util.Graphs;
@@ -40,8 +41,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -52,7 +51,7 @@ import javax.swing.JRootPane;
  *
  * @author Tom Nelson
  */
-public class AnimatingAddNodeDemo extends javax.swing.JApplet {
+public class Eve extends javax.swing.JApplet {
 
     /**
 	 *
@@ -65,8 +64,6 @@ public class AnimatingAddNodeDemo extends javax.swing.JApplet {
 
     private AbstractLayout<Number,Number> layout = null;
 
-    Timer timer;
-
     boolean done;
 
     protected JButton switchLayout;
@@ -77,7 +74,7 @@ public class AnimatingAddNodeDemo extends javax.swing.JApplet {
     public void init() {
 
         //create a graph
-    	Graph<Number,Number> ig = Graphs.<Number,Number>synchronizedDirectedGraph(new DirectedSparseMultigraph<Number,Number>());
+    	Graph<Number,Number> ig = Graphs.<Number,Number>synchronizedUndirectedGraph(new UndirectedSparseMultigraph<Number,Number>());
 
         ObservableGraph<Number,Number> og = new ObservableGraph<Number,Number>(ig);
         og.addGraphEventListener(new GraphEventListener<Number,Number>() {
@@ -172,15 +169,15 @@ public class AnimatingAddNodeDemo extends javax.swing.JApplet {
 
         getContentPane().add(switchLayout, BorderLayout.SOUTH);
 
-        timer = new Timer();
+  //      timer = new Timer();
     }
 
     @Override
     public void start() {
         validate();
         //set timer so applet will change
-        timer.schedule(new RemindTask(), 1000, 1000); //subsequent rate
-        vv.repaint();
+      //  timer.schedule(new RemindTask(), 1000, 1000); //subsequent rate
+    //    vv.repaint();
     }
 
     Integer v_prev = null;
@@ -237,7 +234,7 @@ public class AnimatingAddNodeDemo extends javax.swing.JApplet {
         }
     }
 
-    class RemindTask extends TimerTask {
+/*    class RemindTask extends TimerTask {
 
         @Override
         public void run() {
@@ -245,10 +242,50 @@ public class AnimatingAddNodeDemo extends javax.swing.JApplet {
             if(done) cancel();
 
         }
+    }*/
+
+    public void addEdge( int vFrom, int vTo, int edgeId){
+   // 	vv.getRenderContext().getPickedEdgeState().pick(edge, true);
+        g.addEdge(edgeId, vFrom, vTo);
+
+       //edge = g.getEdgeCount();
+    //	vv.getRenderContext().getPickedEdgeState().pick(edge, true);
+
+        layout.initialize();
+
+		Relaxer relaxer = new VisRunner((IterativeContext)layout);
+		relaxer.stop();
+		relaxer.prerelax();
+		StaticLayout<Number,Number> staticLayout =
+			new StaticLayout<Number,Number>(g, layout);
+		LayoutTransition<Number,Number> lt =
+			new LayoutTransition<Number,Number>(vv, vv.getGraphLayout(),
+					staticLayout);
+		Animator animator = new Animator(lt);
+		animator.start();
+		vv.repaint();
+    }
+
+    public void addVertex( int vId ){
+        g.addVertex(vId);
+        layout.initialize();
+
+
+		Relaxer relaxer = new VisRunner((IterativeContext)layout);
+		relaxer.stop();
+		relaxer.prerelax();
+		StaticLayout<Number,Number> staticLayout =
+			new StaticLayout<Number,Number>(g, layout);
+		LayoutTransition<Number,Number> lt =
+			new LayoutTransition<Number,Number>(vv, vv.getGraphLayout(),
+					staticLayout);
+		Animator animator = new Animator(lt);
+		animator.start();
+		vv.repaint();
     }
 
     public static void main(String[] args) {
-    	AnimatingAddNodeDemo and = new AnimatingAddNodeDemo();
+    	Eve and = new Eve();
     	JFrame frame = new JFrame();
     	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     	frame.getContentPane().add(and);
@@ -257,5 +294,26 @@ public class AnimatingAddNodeDemo extends javax.swing.JApplet {
     	and.start();
     	frame.pack();
     	frame.setVisible(true);
+    	and.addVertex(1);
+
+    	try{
+			Thread.sleep(500);
+		}catch( InterruptedException e ){
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		and.addVertex(2);
+
+    	try{
+			Thread.sleep(500);
+		}catch( InterruptedException e ){
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	and.addVertex(3);
+
+    	and.addEdge(1, 3, 0);
+
     }
 }
