@@ -2,6 +2,9 @@ package raids;
 
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.Vector;
+
+import rice.environment.Environment;
 
 /**
  * Reads Commands from Standard Input, parses the input as
@@ -19,10 +22,16 @@ public class ClientTerminal extends Thread {
 	/** Status Command */
 	private static final String STATUS = "status";
 
+	/** Switch Command */
+	private static final String SWITCH = "switch";
+
 
 // Fields and Class
 
-	/** The Pastry Application */
+	/** List of Applications (if multiple on this JVM) */
+	private Vector<RaidsApp> m_apps;
+
+	/** The Current Application */
 	private RaidsApp m_app;
 
 
@@ -30,8 +39,9 @@ public class ClientTerminal extends Thread {
 	 * Basic Constructor
 	 * @param app the RaidsApp this is delegating to
 	 */
-	public ClientTerminal(RaidsApp app) {
-		m_app = app;
+	public ClientTerminal(Vector<RaidsApp> apps, Environment env) {
+		m_apps = apps;
+		m_app = m_apps.get( env.getRandomSource().nextInt(apps.size()) );
 	}
 
 	/**
@@ -56,10 +66,10 @@ public class ClientTerminal extends Thread {
 			Scanner in = new Scanner( System.in );
 			String line = in.nextLine().trim();
 
-			// Loop until QUIT Message
+			// Loop until QUIT Command
 			while ( line != null && !line.startsWith(QUIT) ) {
 
-				// Status Message
+				// Status Command
 				if ( line.startsWith(STATUS) ) {
 					String id = m_app.getLocalNodeHandle().getId().toStringFull();
 					String name = m_app.getUsername();
@@ -67,14 +77,25 @@ public class ClientTerminal extends Thread {
 					System.out.println("ID: " + id);
 				}
 
+				// Switch Command - Choose a node to command
+				else if ( line.startsWith(SWITCH) ) {
+					line = line.replaceFirst(SWITCH, "").trim();
+					try {
+						int switchTo = Integer.parseInt(line);
+						m_app = m_apps.get(switchTo);
+					} catch (Exception e) {
+						System.err.println("Bad switch command.  Usage: switch <switchNum>");
+					}
+				}
+
 				// ...
 				else if ( line.startsWith("xx") ) {
 
 				}
 
-				// UNKNOWN Message
+				// UNKNOWN Command
 				else {
-					System.err.println("Ignored unknown Message (" + line + ")");
+					System.err.println("Ignored unknown Command (" + line + ")");
 				}
 
 				// Prompt and Read next line for looping

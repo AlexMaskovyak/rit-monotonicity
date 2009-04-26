@@ -10,7 +10,6 @@ import java.util.Vector;
 import rice.Continuation;
 import rice.environment.Environment;
 import rice.p2p.commonapi.Id;
-import rice.p2p.past.Past;
 import rice.p2p.past.PastContent;
 import rice.pastry.NodeIdFactory;
 import rice.pastry.PastryNode;
@@ -26,7 +25,7 @@ import rice.persistence.StorageManagerImpl;
 public class Client {
 
 	/** Multiple applications */
-	private Vector<Past> m_apps = new Vector<Past>();
+	private Vector<RaidsApp> m_apps = new Vector<RaidsApp>();
 
 	/** Number of Nodes */
 	private int m_num_nodes;
@@ -58,12 +57,11 @@ public class Client {
 		// Create the nodes
 		createNodes(bindport, bootaddress, username, numNodes, env);
 
-		// Okay for multiple nodes on 1 JVM we are going to pick only ONE and
-		// make that 1 the command line interface
-		// TODO: Add a switch terminal command for the above case?
-		RaidsApp originatingClient = (RaidsApp)m_apps.get( env.getRandomSource().nextInt(numNodes) );
-		new ClientTerminal( originatingClient ).start();
+		// Send all the apps (per this JVM) so the Terminal can switch between them
+		new ClientTerminal( m_apps, env ).start();
 
+		// For the debugging below
+		RaidsApp originatingClient = (RaidsApp)m_apps.get( env.getRandomSource().nextInt(numNodes) );
 
 		// wait 2 seconds
 		speakingSleep(env, 2000);
