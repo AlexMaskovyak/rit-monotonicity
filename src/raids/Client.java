@@ -1,7 +1,5 @@
 package raids;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -9,18 +7,21 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 
-import eve.EveReporter;
-import eve.EveType;
-
 import rice.Continuation;
 import rice.environment.Environment;
 import rice.p2p.commonapi.Id;
-import rice.p2p.past.*;
-import rice.pastry.*;
+import rice.p2p.past.Past;
+import rice.p2p.past.PastContent;
+import rice.pastry.NodeIdFactory;
+import rice.pastry.PastryNode;
+import rice.pastry.PastryNodeFactory;
 import rice.pastry.commonapi.PastryIdFactory;
 import rice.pastry.socket.SocketPastryNodeFactory;
 import rice.pastry.standard.RandomNodeIdFactory;
-import rice.persistence.*;
+import rice.persistence.LRUCache;
+import rice.persistence.MemoryStorage;
+import rice.persistence.Storage;
+import rice.persistence.StorageManagerImpl;
 
 public class Client {
 
@@ -32,10 +33,6 @@ public class Client {
 
 	/** Configuration */
 	private Properties m_config;
-
-	/** EveReporter */
-	private EveReporter m_reporter;
-
 
 	/**
 	 * TODO: Update This
@@ -49,32 +46,17 @@ public class Client {
 	 * @param env the Environment
 	 * @param config the Application Configuration Properties
 	 */
-	public Client(int bindport, InetSocketAddress bootaddress, int numNodes, final Environment env, Properties config) throws Exception {
-
+	public Client(int bindport, InetSocketAddress bootaddress, String username,
+			int numNodes, final Environment env, Properties config) throws Exception {
 
 		// Application Configuration
 		m_config = config;
-
-		// Setup an EveReporter
-		String host = m_config.getProperty("EVE_HOST");
-		if ( host == null ) {
-			m_reporter = new EveReporter(); // Does nothing
-		} else {
-			String portStr = m_config.getProperty("EVE_PORT", "9999");
-			int port = Integer.parseInt(portStr);
-			m_reporter = new EveReporter(host, port);
-		}
-
-		// Say "Hello World"
-		m_reporter.log("me", "eve", EveType.MSG, "Hello, World!");
-
-
 
 		// Set so everyone can access
 		m_num_nodes = numNodes;
 
 		// Create the nodes
-		createNodes(bindport, bootaddress, numNodes, env);
+		createNodes(bindport, bootaddress, username, numNodes, env);
 
 		// Get a Random Node for the originating Client
 		RaidsApp originatingClient = (RaidsApp)m_apps.get( env.getRandomSource().nextInt(numNodes) );
@@ -303,7 +285,8 @@ public class Client {
 	/**
 	 * Creates nodes with MemoryStorage
 	 */
-	public void createNodes(int bindport, InetSocketAddress bootaddress, int n, final Environment env) throws Exception {
+	public void createNodes(int bindport, InetSocketAddress bootaddress, String username,
+			int n, final Environment env) throws Exception {
 
 		// Generate the NodeIds Randomly
 		NodeIdFactory nidFactory = new RandomNodeIdFactory(env);
@@ -343,14 +326,15 @@ public class Client {
 			// create the persistent part
 			// Storage stor = new PersistentStorage(idf, storageDirectory, 4 * 1024 * 1024, node.getEnvironment());
 			Storage stor = new MemoryStorage(idf);
-			RaidsApp app = new RaidsApp(node, new StorageManagerImpl(idf, stor, new LRUCache(new MemoryStorage(idf), 512 * 1024, node.getEnvironment())), 1, "", "joe", null, 0);
+			String perNodeUsername = (curNode==0) ? username : username+(curNode+1);
+			RaidsApp app = new RaidsApp(node, new StorageManagerImpl(idf, stor,
+					new LRUCache(new MemoryStorage(idf), 512 * 1024, node.getEnvironment())), 1, "",
+					perNodeUsername, m_config.getProperty("EVE_HOST", null),
+					Integer.parseInt( m_config.getProperty("EVE_USER", "9999")) );
 			m_apps.add(app);
 
 		}
 	}
-
-
-
 
 
 	/**
@@ -367,7 +351,7 @@ public class Client {
 		try {
 
 			// Too Few or Too Many Command line arguments
-			if ( args.length < 4 ) {
+			if ( args.length < 5 ) {
 				System.err.println("Too Few Command Line Arguments");
 				usage();
 			} else if ( args.length > 7 ) {
@@ -380,10 +364,12 @@ public class Client {
 			InetAddress bootaddr = args[1].equals("localhost") ? InetAddress.getLocalHost() : InetAddress.getByName(args[1]);
 			int bootport = Integer.parseInt(args[2]);
 			InetSocketAddress bootaddress = new InetSocketAddress(bootaddr, bootport);
-			int numNodes = Integer.parseInt(args[3]);
+			String username = args[3];
+			int numNodes = Integer.parseInt(args[4]);
 
 			// Optional Configuration File
 			Properties config = new Properties();
+			/*
 			if ( args.length >= 5 ) {
 				File configFile = new File(args[4]);
 				if ( configFile.exists() ) {
@@ -394,6 +380,7 @@ public class Client {
 			} else {
 				System.err.println("WARNING: No Config File Given");
 			}
+			*/
 
 			// Optional Eve host and Port overrides
 			if ( args.length > 5 ) {
@@ -403,7 +390,7 @@ public class Client {
 
 			// Launch the Client
 			System.out.println("New Client");
-			new Client(bindport, bootaddress, numNodes, env, config);
+			new Client(bindport, bootaddress, username, numNodes, env, config);
 
 		} catch (Exception e) {
 			System.err.println("Couldn't Setup the Client");
@@ -420,12 +407,13 @@ public class Client {
 	 */
 	private static void usage() {
 		System.out.println("example: java Client 9500 jpecoraro.rit.edu 9000 10 ~/clientcfg.properties");
-		System.out.println("usage: java Client listenPort bootIP bootPort numNodes [ pathToCfgFile [eve_host eve_port] ]");
+		System.out.println("usage: java Client listenPort bootIP bootPort username numNodes [eve_host eve_port] ]");
 		System.out.println("  listenPort = port this node will listen on");
 		System.out.println("  bootIP     = bootstrap node's IP");
 		System.out.println("  bootPort   = bootstrap node's port");
+		System.out.println("  username   = the Client's username");
 		System.out.println("  numNodes   = number of nodes to create on this JVM");
-		System.out.println("  pathToCfgFile = optional properties file");
+		//System.out.println("  pathToCfgFile = optional properties file");
 		System.out.println("  eve_host = optional override EVE_HOST property");
 		System.out.println("  eve_port = optional override EVE_PORT property");
 		System.exit(1);

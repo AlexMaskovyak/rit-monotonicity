@@ -47,7 +47,7 @@ public class RaidsApp extends PastImpl {
 		}
 
 		// Say "Hello World"
-		m_reporter.log(username, null, EveType.MSG, "Hello, World!");
+		m_reporter.log(username, null, EveType.REGISTER, this.getLocalNodeHandle().getId().toStringFull());
 
 	}
 
@@ -72,7 +72,7 @@ public class RaidsApp extends PastImpl {
 		debug("inside forward");
 
 		// Try out Eve
-		m_reporter.log(m_username, null, EveType.FORWARD, "I'm routing a message!");
+		m_reporter.log(m_username, msg.getNextHopHandle().getId().toStringFull(), EveType.FORWARD, "I'm routing a message!");
 
 		// Delegate the normal details to the PastImpl
 		return super.forward(msg);
