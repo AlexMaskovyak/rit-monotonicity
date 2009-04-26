@@ -25,6 +25,9 @@ public class ClientTerminal extends Thread {
 	/** Switch Command */
 	private static final String SWITCH = "switch";
 
+	/** Kill Command */
+	private static final String KILL = "kill";
+
 
 // Fields and Class
 
@@ -34,12 +37,16 @@ public class ClientTerminal extends Thread {
 	/** The Current Application */
 	private RaidsApp m_app;
 
+	/** Environment */
+	private Environment m_env;
+
 
 	/**
 	 * Basic Constructor
 	 * @param app the RaidsApp this is delegating to
 	 */
 	public ClientTerminal(Vector<RaidsApp> apps, Environment env) {
+		m_env = env;
 		m_apps = apps;
 		m_app = m_apps.get( env.getRandomSource().nextInt(apps.size()) );
 	}
@@ -88,8 +95,39 @@ public class ClientTerminal extends Thread {
 					}
 				}
 
+				// Kill Command - Optionally choose a node to kill
+				else if ( line.startsWith(KILL) ) {
+					line = line.replaceFirst(KILL, "").trim();
+
+					// This one
+					if ( line.length() == 0 ) {
+						m_app.kill();
+					}
+
+					// Choose one to kill
+					else {
+						try {
+							int killNum = Integer.parseInt(line);
+							m_apps.get(killNum).kill();
+						} catch (Exception e) {
+							System.err.println("Bad kill command.  Usage: kill [<killNum>]");
+						}
+					}
+
+				}
+
 				// ...
-				else if ( line.startsWith("xx") ) {
+				else if ( line.startsWith("cpr") ) {
+
+					// Link two nodes
+					RaidsApp alpha = m_apps.get(1);
+					RaidsApp beta  = m_apps.get(2);
+
+					System.out.println(alpha);
+					System.out.println(beta);
+
+					alpha.cpr(beta);
+					beta.cpr(alpha);
 
 				}
 
@@ -113,6 +151,9 @@ public class ClientTerminal extends Thread {
 		} catch ( NoSuchElementException e ) { // How Scanner reacts to a ^D
 			// TODO: nice cleanup?
 		}
+
+		// Total Cleanup
+		m_env.destroy();
 
 	}
 
