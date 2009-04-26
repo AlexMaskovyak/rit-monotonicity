@@ -3,14 +3,10 @@ package raids;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 
-import rice.Continuation;
 import rice.environment.Environment;
-import rice.p2p.commonapi.Id;
-import rice.p2p.past.PastContent;
 import rice.pastry.NodeIdFactory;
 import rice.pastry.PastryNode;
 import rice.pastry.PastryNodeFactory;
@@ -22,37 +18,39 @@ import rice.persistence.MemoryStorage;
 import rice.persistence.Storage;
 import rice.persistence.StorageManagerImpl;
 
+
+/**
+ * Initializes potentially multiple Raids Pastry nodes on a
+ * single JVM, connecting them to Eve and passing the
+ * final configuration to a Terminal.
+ *
+ * @author Jeff Hoye (FreePastry Tutorial)
+ * @author Joseph Pecoraro
+ */
 public class Client {
 
 	/** Multiple applications */
 	private Vector<RaidsApp> m_apps = new Vector<RaidsApp>();
 
-	/** Number of Nodes */
-	private int m_num_nodes;
-
 	/** Configuration */
 	private Properties m_config;
 
+
 	/**
-	 * TODO: Update This
 	 * This constructor launches numNodes PastryNodes. They will bootstrap to an
 	 * existing ring if one exists at the specified location, otherwise it will
 	 * start a new ring.
 	 *
 	 * @param bindport the local port to bind to
 	 * @param bootaddress the IP:port of the node to boot from
+	 * @param username the client's username
 	 * @param numNodes the number of nodes to create in this JVM
 	 * @param env the Environment
 	 * @param config the Application Configuration Properties
+	 * @throws Exception
 	 */
 	public Client(int bindport, InetSocketAddress bootaddress, String username,
 			int numNodes, final Environment env, Properties config) throws Exception {
-
-		// Application Configuration
-		m_config = config;
-
-		// Set so everyone can access
-		m_num_nodes = numNodes;
 
 		// Create the nodes
 		createNodes(bindport, bootaddress, username, numNodes, env);
@@ -60,228 +58,7 @@ public class Client {
 		// Send all the apps (per this JVM) so the Terminal can switch between them
 		new ClientTerminal( m_apps, env ).start();
 
-		// For the debugging below
-		RaidsApp originatingClient = (RaidsApp)m_apps.get( env.getRandomSource().nextInt(numNodes) );
-
-		// wait 2 seconds
-		speakingSleep(env, 2000);
-
-		// ---------
-
-		// Send out a PersonalFileList
-		Id storageId = sendOutPersonalFileList(originatingClient);
-
-		// wait 2 seconds
-		speakingSleep(env, 2000);
-
-		// ---------
-
-		// Lookup that list
-		lookupPersonalFileList(originatingClient, storageId);
-
-		// wait 2 seconds
-		speakingSleep(env, 2000);
-
-		// ---------
-
-		// Send out a MasterList
-		Id masterId = sendOutMasterList(originatingClient);
-
-		// wait 2 seconds
-		speakingSleep(env, 2000);
-
-		// ---------
-
-		// Lookup that list
-		lookupMasterList(originatingClient, masterId);
-
-		// wait 2 seconds
-		speakingSleep(env, 2000);
-
-		// ---------
-
-		// Done
-		env.destroy();
-
 	}
-
-
-	/**
-	 * Send out a PersonalFileList for the given node
-	 */
-	public Id sendOutPersonalFileList(RaidsApp originatingClient) {
-
-		System.out.println();
-		System.out.println("---------------------------");
-		System.out.println(" Testing PersonalFileList");
-		System.out.println("---------------------------");
-		System.out.println();
-
-		// Environment from node
-		Environment env = originatingClient.getEnvironment();
-
-		// FAKE Storage information for that list!
-		Id fakeStorageId = PersonalFileListHelper.personalFileListIdFromNodeId(originatingClient.getLocalNodeHandle().getId(), env);
-
-		// FAKE Personal File List for that user
-		PersonalFileListContent pfl = new PersonalFileListContent(fakeStorageId);
-		List<PersonalFileInfo> l = pfl.getList();
-		l.add( new PersonalFileInfo("one.txt") );
-		l.add( new PersonalFileInfo("two.txt") );
-		l.add( new PersonalFileInfo("three.txt") );
-
-
-		// FAKE Store on a random node
-		RaidsApp fakeApp = (RaidsApp)m_apps.get( env.getRandomSource().nextInt(m_num_nodes));
-		System.out.println("Inserting " + pfl.toString() + " at node " + fakeApp.getLocalNodeHandle());
-
-		// Make the Insertion
-		fakeApp.insert(pfl, new Continuation<Boolean[], Exception>() {
-
-			public void receiveException(Exception e) {
-				System.out.println("Error storing FAKE content");
-				e.printStackTrace();
-			}
-
-			public void receiveResult(Boolean[] res) {
-				Boolean[] results = ((Boolean[]) res);
-				int numSuccess = 0;
-				for (int i = 0; i < results.length; i++) {
-					Boolean b = results[i];
-					if ( b.booleanValue() ) {
-						numSuccess++;
-					}
-				}
-				System.out.println("Successfully stored FAKE at " + numSuccess + " locations.");
-			}
-
-		});
-
-		// Here was the storage id
-		return fakeStorageId;
-
-	}
-
-
-	/**
-	 * Announce sleeping. Debugging Helper
-	 */
-	private void speakingSleep(Environment env, int i) throws Exception {
-		System.out.println("Sleeping for " + i + "ms");
-		System.out.flush();
-		env.getTimeSource().sleep(i);
-	}
-
-
-
-	/**
-	 * Lookup the given storageId
-	 */
-	public void lookupPersonalFileList(RaidsApp originatingClient, Id storageId) {
-
-		System.out.println();
-		System.out.println("---------------------");
-		System.out.println(" Performing Lookup");
-		System.out.println("---------------------");
-		System.out.println();
-
-		// Lookup the FAKE storage from the original Node
-		originatingClient.lookup(storageId, new Continuation<PastContent, Exception>() {
-			public void receiveResult(PastContent result) {
-				System.out.println("Successfully looked up storage for FAKE key:");
-				System.out.println(result.toString());
-			}
-
-			public void receiveException(Exception e) {
-				System.out.println("Error looking up FAKE key");
-				e.printStackTrace();
-			}
-		});
-
-	}
-
-
-	/**
-	 * Send out a MasterList
-	 */
-	public Id sendOutMasterList(RaidsApp originatingClient) {
-
-		System.out.println();
-		System.out.println("---------------------");
-		System.out.println(" Testing MasterList");
-		System.out.println("---------------------");
-		System.out.println();
-
-		Environment env = originatingClient.getEnvironment();
-
-		// Generate Fake id for a file
-		PastryIdFactory localFactory = new PastryIdFactory(env);
-		String fakeFile = "a.txt";
-		Id fakeFileId = localFactory.buildId( "MASTER_LOOKUP" + fakeFile );
-
-		// Add to random masters to the list
-		MasterListContent mlc = new MasterListContent(fakeFileId);
-		mlc.getList().add( ((RaidsApp)m_apps.get( env.getRandomSource().nextInt(m_num_nodes))).getLocalNodeHandle() );
-		mlc.getList().add( ((RaidsApp)m_apps.get( env.getRandomSource().nextInt(m_num_nodes))).getLocalNodeHandle() );
-
-
-		// FAKE Store on a random node
-		RaidsApp randomApp = (RaidsApp)m_apps.get( env.getRandomSource().nextInt(m_num_nodes));
-		System.out.println("FAKE: Inserting " + mlc.toString() + " at node " + randomApp.getLocalNodeHandle());
-
-		// Make the Insertion
-		originatingClient.insert(mlc, new Continuation<Boolean[], Exception>() {
-
-			public void receiveException(Exception e) {
-				System.out.println("Error storing MASTER content");
-				e.printStackTrace();
-			}
-
-			public void receiveResult(Boolean[] res) {
-				Boolean[] results = ((Boolean[]) res);
-				int numSuccess = 0;
-				for (int i = 0; i < results.length; i++) {
-					Boolean b = results[i];
-					if ( b.booleanValue() ) {
-						numSuccess++;
-					}
-				}
-				System.out.println("Successfully stored MASTER at " + numSuccess + " locations.");
-			}
-
-		});
-
-		return fakeFileId;
-
-	}
-
-
-	/**
-	 * Lookup MasterList
-	 */
-	public void lookupMasterList(RaidsApp originatingClient, Id storageId) {
-
-		System.out.println();
-		System.out.println("---------------------");
-		System.out.println(" Performing Lookup");
-		System.out.println("---------------------");
-		System.out.println();
-
-		// Lookup the FAKE storage from the original Node
-		originatingClient.lookup(storageId, new Continuation<PastContent, Exception>() {
-			public void receiveResult(PastContent result) {
-				System.out.println("Successfully looked up storage for MASTER list on \"a.txt\":");
-				System.out.println(result.toString());
-			}
-
-			public void receiveException(Exception e) {
-				System.out.println("Error looking up MASTER list");
-				e.printStackTrace();
-			}
-		});
-
-	}
-
 
 
 	/**
@@ -314,13 +91,14 @@ public class Client {
 				}
 			}
 
+			// Debug
 			System.out.println("Finished creating new node " + node);
-
 
 			// used for generating PastContent object Ids.
 			// this implements the "hash function" for our DHT
 			PastryIdFactory idf = new PastryIdFactory(env);
 
+			// TODO: Do Persistent Storage?
 			// create a different storage root for each node
 			@SuppressWarnings("unused")
 			String storageDirectory = "./storage" + node.getId().hashCode();
@@ -331,8 +109,8 @@ public class Client {
 			String perNodeUsername = (curNode==0) ? username : username+(curNode+1);
 			RaidsApp app = new RaidsApp(node, new StorageManagerImpl(idf, stor,
 					new LRUCache(new MemoryStorage(idf), 512 * 1024, node.getEnvironment())), 1, "",
-					perNodeUsername, m_config.getProperty("EVE_HOST", null),
-					Integer.parseInt( m_config.getProperty("EVE_USER", "9999")) );
+					perNodeUsername, m_config.getProperty("EVE_HOST"),
+					Integer.parseInt( m_config.getProperty("EVE_USER")) );
 			m_apps.add(app);
 
 		}
@@ -388,6 +166,9 @@ public class Client {
 			if ( args.length > 5 ) {
 				config.setProperty("EVE_HOST", args[5]);
 				config.setProperty("EVE_PORT", args[6]);
+			} else {
+				config.setProperty("EVE_HOST", null);
+				config.setProperty("EVE_PORT", "0");
 			}
 
 			// Launch the Client
