@@ -46,7 +46,7 @@ public class EveReporter {
 	/**
 	 * Send a Message to Eve of raw input
 	 */
-	public void log(String from, String to, String type, String data) {
+	public void log(String from, String to, EveType type, String data) {
 		log( new EveMessage(from, to, type, data) );
 	}
 
@@ -83,10 +83,10 @@ public class EveReporter {
 		int port = Integer.parseInt(args[0]);
 		String host = args[1];
 		EveReporter reporter = new EveReporter(host, port);
-		reporter.log("joe", "eve", "hello", "testing connectivity");
+		reporter.log("joe", "eve", EveType.MSG, "testing connectivity");
 		System.out.print("Send Eve a Message: ");
 		String input = (new java.util.Scanner(System.in)).nextLine();
-		reporter.log("joe", "eve", "tty", input);
+		reporter.log("joe", "eve", EveType.MSG, input);
 		reporter.close();
 	}
 
