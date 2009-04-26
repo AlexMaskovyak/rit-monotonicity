@@ -99,4 +99,15 @@ public class RaidsApp extends PastImpl {
 		System.out.println( getLocalNodeHandle().getId().toStringFull() + ": " + str);
 	}
 
+
+// Getters and Setters
+
+	public String getUsername() {
+		return m_username;
+	}
+
+	public void setUsername(String username) {
+		m_username = username;
+	}
+
 }
