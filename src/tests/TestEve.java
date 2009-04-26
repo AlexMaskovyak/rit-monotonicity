@@ -10,6 +10,7 @@ import org.junit.Before;
 import eve.Eve;
 import eve.EveMessage;
 import eve.EveReporter;
+import eve.EveType;
 
 /**
  * Make sure that an Eve Server can be Setup
@@ -51,9 +52,9 @@ public class TestEve extends TestCase {
 	public void testReporter() {
 		EveReporter reporter = new EveReporter("localhost", eve_port);
 		EveReporter reporter2 = new EveReporter("localhost", eve_port);
-		reporter.log("junit", "eve", "test", "Unit Test Message");
-		reporter2.log("junit2", "eve", "test", "Unit Test Message");
-		reporter.log( new EveMessage("junit", "eve", "test", "Unit Test Message") );
+		reporter.log("junit", "eve", EveType.DEBUG, "Unit Test Message");
+		reporter2.log("junit2", "eve", EveType.DEBUG, "Unit Test Message");
+		reporter.log( new EveMessage("junit", "eve", EveType.DEBUG, "Unit Test Message") );
 		reporter.close();
 		reporter2.close();
 		assertTrue(true);

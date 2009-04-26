@@ -17,7 +17,7 @@ public class EveMessage implements Serializable {
 	private String m_to;
 
 	/** Type of Message */
-	private String m_type;
+	private EveType m_type;
 
 	/** Data */
 	private String m_data;
@@ -29,7 +29,7 @@ public class EveMessage implements Serializable {
 	 * @param type the type of the message
 	 * @param data the message's information
 	 */
-	public EveMessage(String from, String to, String type, String data) {
+	public EveMessage(String from, String to, EveType type, String data) {
 		m_from = from;
 		m_to = to;
 		m_type = type;
@@ -71,11 +71,11 @@ public class EveMessage implements Serializable {
 		m_to = to;
 	}
 
-	public String getType() {
+	public EveType getType() {
 		return m_type;
 	}
 
-	public void setType(String type) {
+	public void setType(EveType type) {
 		m_type = type;
 	}
 
