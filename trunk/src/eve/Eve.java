@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.JFrame;
 
@@ -54,13 +56,39 @@ public class Eve extends Thread {
 		    	// Continually read EveMessages and output them
 		    	EveMessage msg = null;
 		    	while ( (msg = (EveMessage) in.readObject()) != null ) {
+
+		    		// Debug
 		    		System.out.println(msg);
 
-		    		String from = msg.getFrom();
-		    		String to = msg.getTo();
-		    		m_graph.addVertex(from);
-		    		m_graph.addVertex(to);
-		    		m_graph.addEdge(from, to);
+		    		// Register Message (from name, data is their id)
+		    		if ( msg.getType() == EveType.REGISTER ) {
+		    			String name = msg.getFrom();
+		    			String idString = msg.getData();
+		    			m_graph.addVertex(name);
+		    			synchronized (m_idLookup) {
+							m_idLookup.put(idString, name);
+						}
+		    		}
+
+		    		// Forward Message (from name, to id)
+		    		else if ( msg.getType() == EveType.FORWARD ) {
+		    			String from = msg.getFrom();
+			    		String to = m_idLookup.get( msg.getTo() );
+			    		m_graph.addEdge(from, to);
+		    		}
+
+		    		// Default Message (from name, to name)
+		    		else {
+
+			    		String from = msg.getFrom();
+			    		String to = msg.getTo();
+			    		m_graph.addVertex(from);
+			    		if ( to != null ) {
+			    			m_graph.addVertex(to);
+			    			m_graph.addEdge(from, to);
+			    		}
+
+		    		}
 		    	}
 
 			} catch (Exception e) {}
@@ -77,6 +105,9 @@ public class Eve extends Thread {
 	/** The EveGraph Visualizer */
 	private EveGraph m_graph;
 
+	/** Eve ID to name */
+	private Map<String, String> m_idLookup;
+
 
 	/**
 	 * Provide a Socket to Listen to
@@ -84,8 +115,9 @@ public class Eve extends Thread {
 	 */
 	public Eve(ServerSocket server) {
 
-		// The Server Socket
+		// The States
 		m_server = server;
+		m_idLookup = new HashMap<String, String>();
 
     	// Setup the EveGraph Frame and Display it
     	m_graph = new EveGraph();

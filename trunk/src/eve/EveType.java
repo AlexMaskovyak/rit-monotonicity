@@ -14,6 +14,9 @@ public enum EveType {
 	/** Messages we may want to ignore later */
 	DEBUG,
 
+	/** Register Message (so Eve has a Map of Id to Names) */
+	REGISTER,
+
 	/** A message is on route */
 	FORWARD,
 
