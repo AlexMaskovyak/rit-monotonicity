@@ -161,7 +161,7 @@ public class Client {
 			RaidsApp app = new RaidsApp(node, new StorageManagerImpl(idf, stor,
 					new LRUCache(new MemoryStorage(idf), 512 * 1024, node.getEnvironment())), 1, "",
 					perNodeUsername, m_config.getProperty("EVE_HOST", null),
-					Integer.parseInt( m_config.getProperty("EVE_USER", "9999")) );
+					Integer.parseInt( m_config.getProperty("EVE_PORT", "9999")) );
 			m_apps.add(app);
 
 		}
