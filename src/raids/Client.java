@@ -52,6 +52,9 @@ public class Client {
 	public Client(int bindport, InetSocketAddress bootaddress, String username,
 			int numNodes, final Environment env, Properties config) throws Exception {
 
+		// Set the config
+		m_config = config;
+
 		// Create the nodes
 		createNodes(bindport, bootaddress, username, numNodes, env);
 
@@ -109,8 +112,8 @@ public class Client {
 			String perNodeUsername = (curNode==0) ? username : username+(curNode+1);
 			RaidsApp app = new RaidsApp(node, new StorageManagerImpl(idf, stor,
 					new LRUCache(new MemoryStorage(idf), 512 * 1024, node.getEnvironment())), 1, "",
-					perNodeUsername, m_config.getProperty("EVE_HOST"),
-					Integer.parseInt( m_config.getProperty("EVE_USER")) );
+					perNodeUsername, m_config.getProperty("EVE_HOST", null),
+					Integer.parseInt( m_config.getProperty("EVE_USER", "0")) );
 			m_apps.add(app);
 
 		}
