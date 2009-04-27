@@ -3,10 +3,14 @@ package raids;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 
+import rice.Continuation;
 import rice.environment.Environment;
+import rice.p2p.commonapi.Id;
+import rice.p2p.past.Past;
 import rice.pastry.NodeIdFactory;
 import rice.pastry.PastryNode;
 import rice.pastry.PastryNodeFactory;
@@ -61,6 +65,50 @@ public class Client {
 		// Send all the apps (per this JVM) so the Terminal can switch between them
 		new ClientTerminal( m_apps, env ).start();
 
+
+
+		RaidsApp originatingClient = m_apps.get( env.getRandomSource().nextInt(numNodes) );
+
+
+		// FAKE Storage information for that list!
+		Id fakeStorageId = PersonalFileListHelper.personalFileListIdFromNodeId(originatingClient.getLocalNodeHandle().getId(), env);
+
+		// FAKE Personal File List for that user
+		PersonalFileListContent pfl = new PersonalFileListContent(fakeStorageId);
+		List<PersonalFileInfo> l = pfl.getList();
+		l.add( new PersonalFileInfo("one.txt") );
+		l.add( new PersonalFileInfo("two.txt") );
+		l.add( new PersonalFileInfo("three.txt") );
+
+
+		// FAKE Store on a random node
+		Past fakeApp = (Past)m_apps.get( env.getRandomSource().nextInt(numNodes));
+		System.out.println("Inserting " + pfl.toString() + " at node " + fakeApp.getLocalNodeHandle());
+
+		// Make the Insertion
+		fakeApp.insert(pfl, new Continuation<Boolean[], Exception>() {
+
+			public void receiveException(Exception e) {
+				System.out.println("Error storing FAKE content");
+				e.printStackTrace();
+			}
+
+			public void receiveResult(Boolean[] res) {
+				Boolean[] results = ((Boolean[]) res);
+				int numSuccess = 0;
+				for (int i = 0; i < results.length; i++) {
+					Boolean b = results[i];
+					if ( b.booleanValue() ) {
+						numSuccess++;
+					}
+				}
+				System.out.println("Successfully stored FAKE at " + numSuccess + " locations.");
+			}
+
+		});
+
+
+
 	}
 
 
@@ -113,7 +161,7 @@ public class Client {
 			RaidsApp app = new RaidsApp(node, new StorageManagerImpl(idf, stor,
 					new LRUCache(new MemoryStorage(idf), 512 * 1024, node.getEnvironment())), 1, "",
 					perNodeUsername, m_config.getProperty("EVE_HOST", null),
-					Integer.parseInt( m_config.getProperty("EVE_USER", "0")) );
+					Integer.parseInt( m_config.getProperty("EVE_USER", "9999")) );
 			m_apps.add(app);
 
 		}
