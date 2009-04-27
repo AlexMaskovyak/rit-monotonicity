@@ -59,6 +59,7 @@ public class ClientTerminal extends Thread {
 		m_app = m_apps.get( env.getRandomSource().nextInt(apps.size()) );
 	}
 
+
 	/**
 	 * Nice Prompt
 	 */
@@ -127,6 +128,11 @@ public class ClientTerminal extends Thread {
 					alpha.cpr(beta);
 					beta.cpr(alpha);
 
+				}
+
+				// Empty Command
+				else if ( line.length() == 0 ) {
+					// Do nothing, the User just had a blank line.
 				}
 
 				// UNKNOWN Command
