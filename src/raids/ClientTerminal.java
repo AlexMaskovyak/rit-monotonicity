@@ -16,6 +16,11 @@ public class ClientTerminal extends Thread {
 
 // Command Constants
 
+	/*
+	 * NOTE: If you update/add a new command remember to
+	 * update the private helpCommand() function below!
+	 */
+
 	/** Quit Command */
 	private static final String QUIT = "quit";
 
@@ -27,6 +32,9 @@ public class ClientTerminal extends Thread {
 
 	/** Kill Command */
 	private static final String KILL = "kill";
+
+	/** Help Command */
+	private static final String HELP = "help";
 
 
 // Fields and Class
@@ -95,25 +103,15 @@ public class ClientTerminal extends Thread {
 					}
 				}
 
-				// Kill Command - Optionally choose a node to kill
+				// Kill Command
 				else if ( line.startsWith(KILL) ) {
 					line = line.replaceFirst(KILL, "").trim();
+					killCommand(line);
+				}
 
-					// This one
-					if ( line.length() == 0 ) {
-						m_app.kill();
-					}
-
-					// Choose one to kill
-					else {
-						try {
-							int killNum = Integer.parseInt(line);
-							m_apps.get(killNum).kill();
-						} catch (Exception e) {
-							System.err.println("Bad kill command.  Usage: kill [<killNum>]");
-						}
-					}
-
+				// Help Command
+				else if ( line.startsWith(HELP) ) {
+					helpCommand();
 				}
 
 				// ...
@@ -156,5 +154,44 @@ public class ClientTerminal extends Thread {
 		m_env.destroy();
 
 	}
+
+
+// Command Functions
+
+	/**
+	 * Process a Kill Command
+	 * usage: kill [<killNum>]
+	 * Kills the given process, or "this" if kill Num is not provided
+	 */
+	private void killCommand(String line) {
+		if ( line.length() == 0 ) {
+			m_app.kill();
+		} else {
+			try {
+				int killNum = Integer.parseInt(line);
+				m_apps.get(killNum).kill();
+			} catch (Exception e) {
+				System.err.println("Bad kill command.  Usage: kill [<killNum>]");
+			}
+		}
+	}
+
+
+	/**
+	 * Help Command
+	 * usage: help
+	 * Prints out the help menu
+	 */
+	private void helpCommand() {
+		System.out.println();
+		System.out.println("Commands:");
+		System.out.println("  help      This help menu");
+		System.out.println("  kill [#]  Kills the given node, or the current if none is given");
+		System.out.println("  status    Prints status information on the current node");
+		System.out.println("  switch #  Switches to the given node");
+		System.out.println("  quit      Exits the client program");
+		System.out.println();
+	}
+
 
 }
