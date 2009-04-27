@@ -189,7 +189,7 @@ public class Client {
 	 * Usage Details
 	 */
 	private static void usage() {
-		System.out.println("example: ava raids.Client 9000 localhost 9000 joe 10 localhost 9999");
+		System.out.println("example: java raids.Client 9000 localhost 9000 joe 10 localhost 9999");
 		System.out.println("usage: java Client listenPort bootIP bootPort username numNodes [eve_host eve_port]");
 		System.out.println("  listenPort = port this node will listen on");
 		System.out.println("  bootIP     = bootstrap node's IP");
