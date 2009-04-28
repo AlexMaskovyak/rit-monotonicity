@@ -24,7 +24,7 @@ import eve.EveType;
  *
  * @author Joseph Pecoraro
  */
-public class RaidsApp extends PastImpl {
+public class RaidsApp extends PastImpl{
 
 
 // Inner Classes
@@ -51,6 +51,7 @@ public class RaidsApp extends PastImpl {
 		/**
 		 * Handle the missed heartbeat
 		 */
+		@Override
 		public void run() {
 			debug("Missed our heartbeat for: " + m_nodeHandle.getId().toStringFull() );
 			debug("Stopping Sending our thumps to it");
@@ -91,6 +92,10 @@ public class RaidsApp extends PastImpl {
 	/** Set when the node is dead but the environment is not */
 	private boolean m_dead;
 
+	//private ProtocolApp m_pApp;
+
+	private StorageApp ms;
+
 
 	/**
 	 * Basic Constructor that rides on top of the PastImpl Constructor
@@ -123,6 +128,8 @@ public class RaidsApp extends PastImpl {
 
 		// Register Name:Id pair with Eve
 		m_reporter.log(username, null, EveType.REGISTER, this.getLocalNodeHandle().getId().toStringFull());
+
+		ms = new StorageApp( node );
 
 	}
 
@@ -168,6 +175,7 @@ public class RaidsApp extends PastImpl {
 	 * @param id the destination
 	 * @param msg the message
 	 */
+	@Override
 	public void deliver(Id id, Message msg) {
 
 		// Dead Nodes will still receive messages as long as the environment exists?
@@ -199,6 +207,19 @@ public class RaidsApp extends PastImpl {
 		}
 
 	}
+
+
+	public void requestSpace(int num, long size){
+
+/*	    System.out.println("Requesting Space Node "+endpoint.getLocalNodeHandle()+" anycasting "+size/num);
+	    ScribeContent myMessage = new StorageRequest(endpoint.getLocalNodeHandle(), "test");
+	 //   Topic myTopic = new Topic(m_node.getId());
+
+	    m_scribe.publish(m_topic, myMessage);*/
+		ms.requestSpace(num, size);
+//		m_pApp.requestSpace(num, size);
+	}
+
 
 	@Override
 	public boolean forward(RouteMessage msg) {
@@ -298,5 +319,8 @@ public class RaidsApp extends PastImpl {
 	private void debug(String str) {
 		System.out.println( getLocalNodeHandle().getId().toStringFull() + ": " + str);
 	}
+
+
+
 
 }
