@@ -122,7 +122,6 @@ public class SHA1 {
 			int dataSize = p_inStream.available();
 		    byte[] bytes = new byte[ dataSize ];
 		    p_inStream.read( bytes );
-		    System.out.println( bytes.toString() );
 		    hashValue = hash( bytes );
 	    } catch ( Exception e ) {
 	    } finally {
