@@ -13,6 +13,7 @@ import util.SHA1;
 /**
  * Stores information about a chunked file.
  * @author Alex Maskovyak
+ * @TODO Maximum chunk size.
  *
  */
 public class ChunkedFileInfo {
@@ -45,6 +46,7 @@ public class ChunkedFileInfo {
 	 */
 	public ChunkedFileInfo( String p_originalPath ) {
 		m_originalPath = p_originalPath;
+		m_originalFileHash = SHA1.getInstance().hash( new File( m_originalPath ) );
 		
 		m_chunkPaths = new ArrayList<String>();
 		m_chunkHashes = new HashMap<String,String>();
