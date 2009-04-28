@@ -35,7 +35,7 @@ public class ClientTerminal extends Thread {
 
 	/** Upload Command */
 	private static final String UPLOAD = "upload";
-	
+
 	/** Kill Command */
 	private static final String KILL = "kill";
 
@@ -126,7 +126,7 @@ public class ClientTerminal extends Thread {
 					line = line.replaceFirst(UPLOAD, "").trim();
 					uploadCommand(line);
 				}
-				
+
 				// Help Command
 				else if ( line.startsWith(HELP) ) {
 					helpCommand();
@@ -146,10 +146,10 @@ public class ClientTerminal extends Thread {
 					beta.cpr(alpha);
 
 				}
-				//Store command
+				//Test Storage Requests
 				else if ( line.startsWith(STORE) ) {
 					System.out.println("Storing");
-				//	m_app.requestSpace(5, 20);
+					m_app.requestSpace(5, 20);
 				}
 
 				// Empty Command
@@ -217,20 +217,20 @@ public class ClientTerminal extends Thread {
 			String[] args = line.split( " " );
 			String path = args[ 0 ];
 			int chunks = Integer.parseInt( args[ 1 ] );
-			
+
 			// split into path and filename
 			File f = new File( path );
 			String filePath = f.getParentFile().getAbsolutePath();
 			String fileName = f.getName();
-			
+
 			// chunk the file
 			ChunkedFileInfo cfi = chunker.Chunker.chunk( filePath, fileName, chunks );
-			
+
 			// find storage nodes
-			
+
 			// upload to these nodes
-			
-			
+
+
 		} catch ( Exception e ) {
 			System.err.println( "Bad upload command.  Usage: upload <path> <# chunks>" );
 		}
