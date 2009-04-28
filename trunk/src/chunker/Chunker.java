@@ -23,16 +23,19 @@ public class Chunker {
 	 * @param m		The number of chunks. (3-6 recommended size)
 	 */
 	public static ChunkedFileInfo chunk(String path, String fName, int m) {
+		File file = null;
+		FileInputStream fi = null;
+		FileOutputStream fos[] = null;
+		ChunkedFileInfo chunkInfo = null;
+		
 		try{
 			// setup original file inputstream and chunk output streams
-			File file = new File(path + fName);
-			FileInputStream fi = new FileInputStream(file);
-			FileOutputStream fos[] = new FileOutputStream[m];
+			file = new File( path + fName );
+			fi = new FileInputStream( file );
+			fos = new FileOutputStream[m];
 			
 			// create resultant chunk info container
-			ChunkedFileInfo chunkInfo = 
-				new ChunkedFileInfo( 
-					file.getAbsolutePath() );
+			chunkInfo = new ChunkedFileInfo( file.getAbsolutePath() );
 			
 			// process control information
 			int block;
@@ -61,16 +64,22 @@ public class Chunker {
 			}
 			
 			chunkInfo.calculateChunkInfo();
-			
-			return chunkInfo;
-			
+
 		} catch( FileNotFoundException e ) {
 			e.printStackTrace();
 		} catch( IOException e ) {
 			e.printStackTrace();
+		} finally {
+			try {
+				fi.close();
+				for( FileOutputStream fo : fos ) {
+					fo.close();
+				}
+				System.gc();
+			} catch ( Exception e ) {}
 		}
 		
-		return null;
+		return chunkInfo;
 	}
 
 	
