@@ -11,9 +11,10 @@ import java.io.*;
  * A file splitter based on raid 5 like XOR'ing
  *
  * @author Kevin Cheek
+ * @author Alex Maskovyak
  */
 public class Chunker {
-
+	
 	/**
 	 * This function will split the file into m chunks.
 	 *
@@ -21,17 +22,29 @@ public class Chunker {
 	 * @param fName	The file name
 	 * @param m		The number of chunks. (3-6 recommended size)
 	 */
-	public static void chunk(String path, String fName, int m) {
+	public static ChunkedFileInfo chunk(String path, String fName, int m) {
 		try{
+			// setup original file inputstream and chunk output streams
 			File file = new File(path + fName);
 			FileInputStream fi = new FileInputStream(file);
 			FileOutputStream fos[] = new FileOutputStream[m];
+			
+			// create resultant chunk info container
+			ChunkedFileInfo chunkInfo = 
+				new ChunkedFileInfo( 
+					file.getAbsolutePath() );
+			
+			// process control information
 			int block;
 			int parity = m;
 			int pData = 0;
 
-			for( int i = 0; i < m; i++ ){
-				fos[ i ] = new FileOutputStream(path + i + "_" + fName);
+			String chunkPath;
+			
+			for( int i = 0; i < m; i++ ) {
+				chunkPath = String.format( "%s%d_%s", path, i, fName );
+				chunkInfo.addChunkPaths( chunkPath );
+				fos[ i ] = new FileOutputStream( chunkPath );
 			}
 			while( fi.available() > 0 ){
 				pData = 0;
@@ -46,13 +59,19 @@ public class Chunker {
 				}
 				fos[ parity ].write(pData);
 			}
-		}catch( FileNotFoundException e ){
+			
+			return chunkInfo;
+			
+		} catch( FileNotFoundException e ) {
 			e.printStackTrace();
-		}catch( IOException e ){
+		} catch( IOException e ) {
 			e.printStackTrace();
 		}
+		
+		return null;
 	}
 
+	
 	/**
 	 * Reassemble the file chunks into a single file.
 	 * FileChunks must be in order from 0 -> M with null being given to missing
@@ -100,7 +119,7 @@ public class Chunker {
 					}
 				}
 
-				if( regenerate >= 0){
+				if( regenerate >= 0 ){
 	//				System.out.println("Regenerating: " + (char)pData);
 					block[regenerate] = pData;
 				}
@@ -112,7 +131,7 @@ public class Chunker {
 				}
 			}
 
-		}catch( IOException e ){
+		} catch( IOException e ) {
 			e.printStackTrace();
 		}
 
