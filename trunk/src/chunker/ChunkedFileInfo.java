@@ -1,8 +1,6 @@
 package chunker;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -77,6 +75,14 @@ public class ChunkedFileInfo {
 	 */
 	public String getOriginalPath() {
 		return m_originalPath;
+	}
+	
+	/**
+	 * Obtain the original file's hash.
+	 * @return Hash of the original file's contents.
+	 */
+	public String getOriginalFileHash() {
+		return m_originalFileHash;
 	}
 	
 	/**
