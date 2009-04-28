@@ -61,10 +61,7 @@ public class TestChunker extends TestCase {
 	    Arrays.sort(fileChunks);
 
 	    // Debug
-	    System.out.println( "Files: (" + fileChunks.length + ")" );
-	    for (int i = 0; i < fileChunks.length; i++) {
-			System.out.println( fileChunks[i] );
-		}
+	    debugList(fileChunks);
 
 	    // Assert Correct Number of Chunks
 	    assertEquals(numChunks, fileChunks.length);
@@ -84,7 +81,6 @@ public class TestChunker extends TestCase {
 				f.delete();
 			}
 	    }
-
 
 	}
 
@@ -116,10 +112,7 @@ public class TestChunker extends TestCase {
 	    Arrays.sort(fileChunks);
 
 	    // Debug
-	    System.out.println( "Files: (" + fileChunks.length + ")" );
-	    for (int i = 0; i < fileChunks.length; i++) {
-			System.out.println( fileChunks[i] );
-		}
+	    debugList(fileChunks);
 
 	    // Assert Correct Number of Chunks
 	    assertEquals(numChunks, fileChunks.length);
@@ -140,6 +133,88 @@ public class TestChunker extends TestCase {
 			}
 	    }
 
+	}
+
+	/**
+	 * More advanced test for an image file
+	 * - Deleting a Part
+	 */
+	public void testChunkImageWithMissingSection() {
+
+		// Debug
+		System.out.println("\nChunking File: " + TEST_PATH + IMAGE_FILENAME);
+
+		// Test Variable
+		int numChunks = 5;
+
+		// Chunk
+		Chunker.chunk(TEST_PATH, IMAGE_FILENAME, numChunks);
+
+		// Verify there are the correct number of files (chunks)
+	    File pwd = new File(TEST_PATH);
+	    String[] fileChunks = pwd.list(new FilenameFilter() {
+	        public boolean accept(File dir, String name) {
+	            return name.endsWith("_" + IMAGE_FILENAME);
+	        }
+	    });
+
+	    // Sort the Filenames (for correct assembly)
+	    // NOTE: Only for 0-9 chunks, maybe sort incorrectly for >10 chunks
+	    Arrays.sort(fileChunks);
+
+	    // Debug
+	    debugList(fileChunks);
+
+	    // Assert Correct Number of Chunks
+	    assertEquals(numChunks, fileChunks.length);
+
+	    // Delete Part 3 of 5 (0, 1, x, 3, 4)
+	    File partTwo = new File(TEST_PATH + fileChunks[2]);
+	    partTwo.delete();
+
+	    // New Listing
+	    String[] fileChunksNew = pwd.list(new FilenameFilter() {
+	        public boolean accept(File dir, String name) {
+	            return name.endsWith("_" + IMAGE_FILENAME);
+	        }
+	    });
+
+	    // Debug
+	    debugList(fileChunksNew);
+
+	    // Assert Correct Number of Chunks (1 less then before)
+	    assertEquals(numChunks-1, fileChunksNew.length);
+
+		// Reassemble (assume fileChunks are in sorted order)
+	    Chunker.reassemble(TEST_PATH, fileChunks, TEST_PATH, REASSEMBLED_PREFIX + IMAGE_FILENAME);
+
+		// Verify the two files are equivalent
+	    String orig = TEST_PATH + IMAGE_FILENAME;
+	    String reassembled = TEST_PATH + REASSEMBLED_PREFIX + IMAGE_FILENAME;
+	    assertTrue( compareFiles(orig, reassembled) );
+
+	    // Delete Chunks (not final reassembled part)
+	    if ( DELETE_COMPONENTS ) {
+		    for (int i = 0; i < fileChunks.length; i++) {
+				File f = new File(TEST_PATH + fileChunks[i]);
+				f.delete();
+			}
+	    }
+
+	}
+
+
+// Private Helpers
+
+	/**
+	 * Debug a file list
+	 * @list List of Strings to print out
+	 */
+	private void debugList(String[] list) {
+		System.out.println( "Files: (" + list.length + ")" );
+	    for (int i = 0; i < list.length; i++) {
+			System.out.println( list[i] );
+		}
 	}
 
 
