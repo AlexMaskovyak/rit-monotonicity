@@ -45,6 +45,7 @@ public class ChunkedFileInfo {
 	 */
 	public ChunkedFileInfo( String p_originalPath ) {
 		m_originalPath = new File( p_originalPath ).getAbsoluteFile().getAbsolutePath();
+		System.out.println( m_originalPath );
 		m_originalFileHash = SHA1.getInstance().hash( new File( m_originalPath ) );
 		
 		m_chunkPaths = new ArrayList<String>();
@@ -61,8 +62,16 @@ public class ChunkedFileInfo {
 	
 	public void addChunkPaths( String... p_chunkPaths ) {
 		for( String chunk : p_chunkPaths ) {
-			m_chunkPaths.add( chunk );
-
+			File chunkFile = new File( chunk ).getAbsoluteFile();
+			m_chunkPaths.add( chunkFile.getAbsolutePath() );
+		}
+	}
+	
+	/**
+	 * Calculate the hashes and maximum chunk size.
+	 */
+	public void calculateChunkInfo() {
+		for( String chunk : m_chunkPaths ) {
 			File chunkFile = new File( chunk );
 			m_chunkHashes.put( chunk, SHA1.getInstance().hash( chunkFile ) );
 			m_maxChunkSize = 
