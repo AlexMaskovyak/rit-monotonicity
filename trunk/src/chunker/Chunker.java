@@ -60,6 +60,8 @@ public class Chunker {
 				fos[ parity ].write(pData);
 			}
 			
+			chunkInfo.calculateChunkInfo();
+			
 			return chunkInfo;
 			
 		} catch( FileNotFoundException e ) {
