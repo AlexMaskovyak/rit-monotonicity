@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
+import util.SHA1;
+
 import chunker.ChunkedFileInfo;
 import chunker.Chunker;
 import junit.framework.TestCase;
@@ -76,6 +78,10 @@ public class TestChunker extends TestCase {
 	    String orig = TEST_PATH + TEXT_FILENAME;
 	    String reassembled = TEST_PATH + REASSEMBLED_PREFIX + TEXT_FILENAME;
 	    assertTrue( compareFiles(orig, reassembled) );
+	    assertTrue( compareFilesByHash( orig, reassembled ) );
+	    
+	    // Debug
+	    debugHashes( orig, reassembled );
 
 	    // Delete Chunks (not final reassembled part)
 	    if ( DELETE_COMPONENTS ) {
@@ -126,6 +132,10 @@ public class TestChunker extends TestCase {
 	    String orig = TEST_PATH + IMAGE_FILENAME;
 	    String reassembled = TEST_PATH + REASSEMBLED_PREFIX + IMAGE_FILENAME;
 	    assertTrue( compareFiles(orig, reassembled) );
+	    assertTrue( compareFilesByHash( orig, reassembled ) );
+
+	    // Debug
+	    debugHashes( orig, reassembled );
 
 	    // Delete Chunks (not final reassembled part)
 	    if ( DELETE_COMPONENTS ) {
@@ -134,7 +144,6 @@ public class TestChunker extends TestCase {
 				f.delete();
 			}
 	    }
-
 	}
 
 	/**
@@ -194,7 +203,11 @@ public class TestChunker extends TestCase {
 	    String orig = TEST_PATH + IMAGE_FILENAME;
 	    String reassembled = TEST_PATH + REASSEMBLED_PREFIX + IMAGE_FILENAME;
 	    assertTrue( compareFiles(orig, reassembled) );
+	    assertTrue( compareFilesByHash( orig, reassembled ) );
 
+	    // Debug
+	    debugHashes( orig, reassembled );
+	    
 	    // Delete Chunks (not final reassembled part)
 	    if ( DELETE_COMPONENTS ) {
 		    for (int i = 0; i < fileChunks.length; i++) {
@@ -202,6 +215,8 @@ public class TestChunker extends TestCase {
 				f.delete();
 			}
 	    }
+	    
+	    
 
 	}
 
@@ -219,6 +234,21 @@ public class TestChunker extends TestCase {
 		}
 	}
 	
+	/**
+	 * Debug display of hash comparison.
+	 * @param filenames names of file to demonstrate hash comparison.
+	 */
+	private void debugHashes(String... filenames) {
+		for( int i = 0; i < filenames.length; ++i ) { 
+			
+			System.out.printf( 
+				"Hash%d: %s File%d: %s\n",
+					i,
+					SHA1.getInstance().hash( new File( filenames[ i ] ) ),
+					i,					
+					filenames[ i ] );
+		}
+	}
 	
 	/**
 	 * Quick Comparison of two files
@@ -244,4 +274,15 @@ public class TestChunker extends TestCase {
 		return false;
 	}
 
+	/**
+	 * SHA1-based comparison of two files.
+	 * @param filename1 name of the first file.
+	 * @param filename2 name of the second file.
+	 * @return true if their hashes are equal, false otherwise.
+	 */
+	private boolean compareFilesByHash( String filename1, String filename2 ) {
+		String hash1 = SHA1.getInstance().hash( new File( filename1 ) );
+		String hash2 = SHA1.getInstance().hash( new File( filename2 ) );
+		return hash1.equals( hash2 );
+	}
 }
