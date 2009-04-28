@@ -11,7 +11,6 @@ import util.SHA1;
 /**
  * Stores information about a chunked file.
  * @author Alex Maskovyak
- * @TODO Maximum chunk size.
  *
  */
 public class ChunkedFileInfo {
@@ -31,6 +30,8 @@ public class ChunkedFileInfo {
 	private List<String> m_chunkPaths;
 	/** Hashes of file chunks. */
 	private Map<String,String> m_chunkHashes;
+	/** Size of the largest file chunk. */
+	private long m_maxChunkSize;
 	
 	///
 	///
@@ -48,6 +49,8 @@ public class ChunkedFileInfo {
 		
 		m_chunkPaths = new ArrayList<String>();
 		m_chunkHashes = new HashMap<String,String>();
+		
+		m_maxChunkSize = 0l;
 	}
 	
 	///
@@ -59,7 +62,13 @@ public class ChunkedFileInfo {
 	public void addChunkPaths( String... p_chunkPaths ) {
 		for( String chunk : p_chunkPaths ) {
 			m_chunkPaths.add( chunk );
-			m_chunkHashes.put( chunk, SHA1.getInstance().hash( new File( chunk ) ) );
+
+			File chunkFile = new File( chunk );
+			m_chunkHashes.put( chunk, SHA1.getInstance().hash( chunkFile ) );
+			m_maxChunkSize = 
+				( chunkFile.length() > m_maxChunkSize ) 
+					? chunkFile.length()
+					: m_maxChunkSize;
 		}
 	}
 	
@@ -92,6 +101,14 @@ public class ChunkedFileInfo {
 	public String[] getChunkPaths() {
 		String[] chunkArray = new String[ m_chunkPaths.size() ];
 		return m_chunkPaths.toArray( chunkArray );
+	}
+	
+	/**
+	 * Obtain the size, in bytes, of the maximum file chunk.
+	 * @return Size of the largest chunk.
+	 */
+	public long getMaxChunkSize() {
+		return m_maxChunkSize;
 	}
 	
 	/**
