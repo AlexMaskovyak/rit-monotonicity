@@ -77,11 +77,10 @@ public class Eve extends Thread {
 			    		m_graph.addEdge(from, to);
 		    		}
 
-		    		// Default Message (from name, to name)
+		    		// Default Message (from id, to id)
 		    		else {
-
-			    		String from = msg.getFrom();
-			    		String to = msg.getTo();
+			    		String from = m_idLookup.get( msg.getFrom() );
+			    		String to = m_idLookup.get( msg.getTo() );
 			    		m_graph.addVertex(from);
 			    		if ( to != null ) {
 			    			m_graph.addVertex(to);
