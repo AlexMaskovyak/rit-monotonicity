@@ -129,8 +129,7 @@ public class RaidsApp extends PastImpl{
 		// Register Name:Id pair with Eve
 		m_reporter.log(username, null, EveType.REGISTER, this.getLocalNodeHandle().getId().toStringFull());
 
-		ms = new StorageApp( node );
-
+		ms = new StorageApp( node, m_reporter );
 	}
 
 // Heartbeat Helpers

@@ -1,5 +1,9 @@
 package raids;
 
+import java.io.IOException;
+
+import eve.EveReporter;
+import eve.EveType;
 import rice.p2p.commonapi.*;
 import rice.p2p.scribe.Scribe;
 import rice.p2p.scribe.ScribeClient;
@@ -9,9 +13,7 @@ import rice.p2p.scribe.Topic;
 import rice.pastry.commonapi.PastryIdFactory;
 
 /**
- * @author Kevin Cheek
- *
- * Based on Scribe tutorial
+ * @author Kevin Cheek Based on Scribe tutorial
  */
 @SuppressWarnings("deprecation")
 public class StorageApp implements ScribeClient, Application {
@@ -28,14 +30,19 @@ public class StorageApp implements ScribeClient, Application {
 
 	private int m_response;
 
+	private EveReporter m_reporter;
+
+	private Node m_node;
+
 	/**
 	 * The constructor for this scribe client. It will construct the
 	 * ScribeApplication.
 	 *
 	 * @param node
 	 *            the PastryNode
+	 * @param m_reporter
 	 */
-	public StorageApp(Node node) {
+	public StorageApp(Node node, EveReporter reporter) {
 		// you should recognize this from lesson 3
 		this.endpoint = node.buildEndpoint(this, "myinstance");
 
@@ -50,12 +57,13 @@ public class StorageApp implements ScribeClient, Application {
 		endpoint.register();
 		m_scribe.subscribe(m_topic, this);
 		m_isDone = true;
+		m_reporter = reporter;
+		m_node = node;
 	}
 
 	public NodeHandle[] requestSpace(int num, long size) {
 		System.out.println("requestSpace");
-		ScribeContent myMessage = new StorageRequest(endpoint.getLocalNodeHandle(), size
-				/ num);
+		ScribeContent myMessage = new StorageRequest(endpoint.getLocalNodeHandle(), size);
 		//	    MyScribeContent myMessage = new MyScribeContent(endpoint.getLocalNodeHandle(), seqNum++);
 		m_isDone = false;
 		m_response = num;
@@ -77,16 +85,15 @@ public class StorageApp implements ScribeClient, Application {
 	}
 
 	/**
-	 * Part of the Application interface. Will receive PublishContent every so
-	 * often.
 	 */
 	public void deliver(Id id, Message message) {
 		//  System.out.println("Deliver1");
 		if( message instanceof StorageRequest ){
 			if( m_response > 0 ){
 				m_nodes[ --m_response ] = ((StorageRequest) message).getFrom();
-	/*			System.out.println("Got Response: "
-						+ ((StorageRequest) message).getFrom().getId());*/
+				//		m_reporter.log(   m_node.getId().toStringFull(), ((StorageRequest) message).getFrom().getId().toStringFull(), EveType.MSG, "ScribeMulticast");
+							System.out.println("Got Storage Response: "
+									+ ((StorageRequest) message).getFrom().getId());
 			}else{
 				m_isDone = true;
 			}
@@ -98,10 +105,12 @@ public class StorageApp implements ScribeClient, Application {
 	 * Called whenever we receive a published message.
 	 */
 	public void deliver(Topic topic, ScribeContent content) {
-		System.out.println("MyScribeClient.deliver(" + topic + "," + content
-				+ ")");
+	/*	System.out.println("MyScribeClient.deliver(" + topic + "," + content
+				+ ")");*/
 		if( content instanceof StorageRequest ){
-			System.out.println("Got Storage Request... SEnding response");
+			System.out.println("Got Storage Request... Sending response");
+
+		//		m_reporter.log(  ((StorageRequest)content).getFrom().getId().toStringFull(), m_node.getId().toStringFull(), EveType.MSG, "ScribeMulticast");
 			//   Message msg = new MyMsg(endpoint.getId(), nh.getId());
 			endpoint.route(null, ((StorageRequest) content),
 					((StorageRequest) content).getFrom());
@@ -113,11 +122,12 @@ public class StorageApp implements ScribeClient, Application {
 	 * delivered elsewhere. Returning true stops the message here.
 	 */
 	public boolean anycast(Topic topic, ScribeContent content) {
-		boolean returnValue = m_scribe.getEnvironment().getRandomSource().nextInt(
-				3) == 0;
-		System.out.println("MyScribeClient.anycast(" + topic + "," + content
-				+ "):" + returnValue);
-		return returnValue;
+		/*	boolean returnValue = m_scribe.getEnvironment().getRandomSource().nextInt(
+					3) == 0;
+			System.out.println("MyScribeClient.anycast(" + topic + "," + content
+					+ "):" + returnValue);
+			return returnValue;*/
+		return false;
 	}
 
 	public void childAdded(Topic topic, NodeHandle child) {
@@ -132,7 +142,30 @@ public class StorageApp implements ScribeClient, Application {
 		//   System.out.println("MyScribeClient.childFailed("+topic+")");
 	}
 
-	public boolean forward(RouteMessage message) {
+	@Override
+	public boolean forward(RouteMessage msg) {
+
+		// Debug
+		//		debug("inside forward");
+
+		// Try out Eve
+/*		System.out.println("Inside forward me: " + m_node.getId()
+				+ " Destination: " + ((StorageRequest) msg.getMessage()).getFrom().getId().toString() );
+		if( msg.getMessage() instanceof StorageRequest ){
+			System.out.println("insidefloop");
+			if( ((StorageRequest) msg.getMessage()).getPrevHop() != null ){
+				//		System.out.println("Forward From: " + ((StorageRequest)msg.getMessage(endpoint.getDeserializer()).getPrevHop().getId().toString() + " to: "+ msg.getNextHopHandle().getId().toString());
+				m_reporter.log(
+						m_node.getId().toStringFull(),
+						((StorageRequest) msg.getMessage()).getPrevHop().getId().toStringFull(),
+						EveType.MSG, "ScribeMulticast");
+			}*/
+			//	((StorageRequest)msg.getMessage()).addHop(m_node.getLocalNodeHandle());
+	//		((StorageRequest) msg.getMessage()).addHop(m_node.getLocalNodeHandle());
+
+			/*		((StorageRequest)msg.getMessage()).prevHop = m_node.getLocalNodeHandle();
+					((StorageRequest)msg.getMessage()).test();*/
+		//}
 		return true;
 	}
 
