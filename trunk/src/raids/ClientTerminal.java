@@ -36,6 +36,10 @@ public class ClientTerminal extends Thread {
 	/** Help Command */
 	private static final String HELP = "help";
 
+	/** Store */
+	private static final String STORE = "store";
+
+
 
 // Fields and Class
 
@@ -47,6 +51,7 @@ public class ClientTerminal extends Thread {
 
 	/** Environment */
 	private Environment m_env;
+
 
 
 	/**
@@ -128,6 +133,11 @@ public class ClientTerminal extends Thread {
 					alpha.cpr(beta);
 					beta.cpr(alpha);
 
+				}
+				//Store command
+				else if ( line.startsWith(STORE) ) {
+					System.out.println("Storing");
+				//	m_app.requestSpace(5, 20);
 				}
 
 				// Empty Command
