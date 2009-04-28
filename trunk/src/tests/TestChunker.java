@@ -8,12 +8,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
+import chunker.ChunkedFileInfo;
 import chunker.Chunker;
 import junit.framework.TestCase;
 
 /**
  * TestSuite for our chunker package.
  *
+ * @author Alex Maskovyak
  * @author Joseph Pecoraro
  */
 public class TestChunker extends TestCase {
@@ -46,7 +48,7 @@ public class TestChunker extends TestCase {
 		int numChunks = 3;
 
 		// Chunk
-		Chunker.chunk(TEST_PATH, TEXT_FILENAME, numChunks);
+		ChunkedFileInfo cfi = Chunker.chunk(TEST_PATH, TEXT_FILENAME, numChunks);
 
 		// Verify there are the correct number of files (chunks)
 	    File pwd = new File(TEST_PATH);
@@ -60,11 +62,12 @@ public class TestChunker extends TestCase {
 	    // NOTE: Only for 0-9 chunks, maybe sort incorrectly for >10 chunks
 	    Arrays.sort(fileChunks);
 
-	    // Debug
+		// Debug
 	    debugList(fileChunks);
 
 	    // Assert Correct Number of Chunks
 	    assertEquals(numChunks, fileChunks.length);
+	    assertEquals(numChunks, cfi.getChunkPaths().length);
 
 		// Reassemble (assume fileChunks are in sorted order)
 	    Chunker.reassemble(TEST_PATH, fileChunks, TEST_PATH, REASSEMBLED_PREFIX + TEXT_FILENAME);
@@ -77,11 +80,10 @@ public class TestChunker extends TestCase {
 	    // Delete Chunks (not final reassembled part)
 	    if ( DELETE_COMPONENTS ) {
 		    for (int i = 0; i < fileChunks.length; i++) {
-				File f = new File(TEST_PATH + fileChunks[i]);
+				File f = new File(TEST_PATH + fileChunks[i]).getAbsoluteFile();
 				f.delete();
-			}
+		    }
 	    }
-
 	}
 
 
@@ -128,7 +130,7 @@ public class TestChunker extends TestCase {
 	    // Delete Chunks (not final reassembled part)
 	    if ( DELETE_COMPONENTS ) {
 		    for (int i = 0; i < fileChunks.length; i++) {
-				File f = new File(TEST_PATH + fileChunks[i]);
+				File f = new File(TEST_PATH + fileChunks[i]).getAbsoluteFile();
 				f.delete();
 			}
 	    }
@@ -204,7 +206,7 @@ public class TestChunker extends TestCase {
 	}
 
 
-// Private Helpers
+	// Private Helpers
 
 	/**
 	 * Debug a file list
@@ -216,8 +218,8 @@ public class TestChunker extends TestCase {
 			System.out.println( list[i] );
 		}
 	}
-
-
+	
+	
 	/**
 	 * Quick Comparison of two files
 	 * @param filename1 name of the first file
