@@ -1,8 +1,5 @@
 package raids;
 
-import java.io.IOException;
-
-import examples.MyScribeContent;
 import rice.p2p.commonapi.*;
 import rice.p2p.scribe.Scribe;
 import rice.p2p.scribe.ScribeClient;
@@ -16,6 +13,7 @@ import rice.pastry.commonapi.PastryIdFactory;
  *
  * Based on Scribe tutorial
  */
+@SuppressWarnings("deprecation")
 public class StorageApp implements ScribeClient, Application {
 
 	Scribe m_scribe;
