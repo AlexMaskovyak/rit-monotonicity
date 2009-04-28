@@ -77,6 +77,15 @@ public class Eve extends Thread {
 			    		m_graph.addEdge(from, to);
 		    		}
 
+		    		// Debug Message
+		    		else if ( msg.getType() == EveType.DEBUG ){
+		    			String from = msg.getFrom();
+		    			String to = msg.getTo();
+		    			m_graph.addVertex(from);
+		    			m_graph.addVertex(to);
+		    			m_graph.addEdge(from, to);
+		    		}
+
 		    		// Default Message (from id, to id)
 		    		else {
 			    		String from = m_idLookup.get( msg.getFrom() );
