@@ -44,7 +44,7 @@ public class ChunkedFileInfo {
 	 * @param p_originalPath Path to the original
 	 */
 	public ChunkedFileInfo( String p_originalPath ) {
-		m_originalPath = p_originalPath;
+		m_originalPath = new File( p_originalPath ).getAbsoluteFile().getAbsolutePath();
 		m_originalFileHash = SHA1.getInstance().hash( new File( m_originalPath ) );
 		
 		m_chunkPaths = new ArrayList<String>();
