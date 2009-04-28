@@ -1,8 +1,11 @@
 package raids;
 
+import java.io.File;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Vector;
+
+import chunker.ChunkedFileInfo;
 
 import rice.environment.Environment;
 
@@ -30,6 +33,9 @@ public class ClientTerminal extends Thread {
 	/** Switch Command */
 	private static final String SWITCH = "switch";
 
+	/** Upload Command */
+	private static final String UPLOAD = "upload";
+	
 	/** Kill Command */
 	private static final String KILL = "kill";
 
@@ -115,6 +121,12 @@ public class ClientTerminal extends Thread {
 					killCommand(line);
 				}
 
+				// Upload Command
+				else if ( line.startsWith(UPLOAD)) {
+					line = line.replaceFirst(UPLOAD, "").trim();
+					uploadCommand(line);
+				}
+				
 				// Help Command
 				else if ( line.startsWith(HELP) ) {
 					helpCommand();
@@ -192,6 +204,38 @@ public class ClientTerminal extends Thread {
 		}
 	}
 
+	/**
+	 * Process a file Upload Command.
+	 * usage: upload <filepath> <chunks>
+	 * Obtains the provided file from the file system, chunks it, and uploads
+	 * it to the network.
+	 * @param line Line stripped of command hook.
+	 */
+	private void uploadCommand(String line) {
+		try {
+			// obtain argumeents
+			String[] args = line.split( " " );
+			String path = args[ 0 ];
+			int chunks = Integer.parseInt( args[ 1 ] );
+			
+			// split into path and filename
+			File f = new File( path );
+			String filePath = f.getParentFile().getAbsolutePath();
+			String fileName = f.getName();
+			
+			// chunk the file
+			ChunkedFileInfo cfi = chunker.Chunker.chunk( filePath, fileName, chunks );
+			
+			// find storage nodes
+			
+			// upload to these nodes
+			
+			
+		} catch ( Exception e ) {
+			System.err.println( "Bad upload command.  Usage: upload <path> <# chunks>" );
+		}
+
+	}
 
 	/**
 	 * Help Command
@@ -205,6 +249,7 @@ public class ClientTerminal extends Thread {
 		System.out.println("  kill [#]  Kills the given node, or the current if none is given");
 		System.out.println("  status    Prints status information on the current node");
 		System.out.println("  switch #  Switches to the given node");
+		System.out.println("  upload [path] # Chunks and uploads a file to a # nodes in the network");
 		System.out.println("  quit      Exits the client program");
 		System.out.println();
 	}
