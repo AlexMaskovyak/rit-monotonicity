@@ -34,4 +34,12 @@ public class PersonalFileInfo implements Serializable {
 		m_name = name;
 	}
 
+	/**
+	 * For Debugging
+	 * @return a string representation of this object
+	 */
+	public String toString() {
+		return super.toString() + ":" + m_name;
+	}
+
 }
