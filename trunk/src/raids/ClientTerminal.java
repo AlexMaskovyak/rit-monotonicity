@@ -1,20 +1,21 @@
 package raids;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Vector;
 
-import chunker.ChunkedFileInfo;
-
 import rice.environment.Environment;
+import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.NodeHandle;
+import chunker.ChunkedFileInfo;
 
 /**
  * Reads Commands from Standard Input, parses the input as
  * commands, and delegates actions to the provided Player.
- * 
+ *
  * @author Kevin Cheek
  * @author Alex Maskovyak
  * @author Joseph Pecoraro
@@ -42,7 +43,7 @@ public class ClientTerminal extends Thread {
 
 	/** Upload Command */
 	private static final String UPLOAD = "upload";
-	
+
 	/** Kill Command */
 	private static final String KILL = "kill";
 
@@ -125,7 +126,7 @@ public class ClientTerminal extends Thread {
 					line = line.replaceFirst(UPLOAD, "").trim();
 					uploadCommand(line);
 				}
-				
+
 				// Help Command
 				else if ( line.startsWith(HELP) ) {
 					helpCommand();
@@ -224,36 +225,55 @@ public class ClientTerminal extends Thread {
 	 */
 	private void uploadCommand(String line) {
 		try {
+
 			// obtain arguments
+			// TODO: Add error checking to this parsing
 			String[] args = line.split( " " );
 			String path = args[ 0 ];
 			int chunks = Integer.parseInt( args[ 1 ] );
-			
+
 			// split into path and filename
 			File f = new File( path );
-			String filePath = f.getParentFile().getAbsolutePath();
+			String filePath = f.getParentFile().getAbsolutePath() + "/";
 			String fileName = f.getName();
-			
+
 			// chunk the file
-			ChunkedFileInfo cfi = 
-				chunker.Chunker.chunk( filePath, fileName, chunks );
-			
-			// find master storage nodes
-			NodeHandle[] masters = 
-				m_app.requestSpace( chunks, cfi.getMaxChunkSize() );
-			
-			// create masterlist
-			MasterListContent msc = 
-				new MasterListContent( m_app.getNode().getId(), masters );
-			
+			ChunkedFileInfo cfi = chunker.Chunker.chunk( filePath, fileName, chunks );
+
+			// find nodes with storage
+			NodeHandle[] storageNodes = m_app.requestSpace( chunks, cfi.getMaxChunkSize() );
+
+			// make the first 3 masters (arbitrary)
+			NodeHandle[] masters = null;
+			if ( storageNodes.length < 3 ) {
+				System.arraycopy(storageNodes, 0, masters, 0, storageNodes.length);
+			} else {
+				masters = new NodeHandle[] { storageNodes[0], storageNodes[1], storageNodes[2] };
+			}
+
+			// Debug for Demonstration
+			System.out.println("Nodes That Will Accept Storage: ");
+			for (NodeHandle nh : storageNodes) { System.out.println(nh); }
+			System.out.println();
+			System.out.println("Master Nodes: ");
+			for (NodeHandle nh : masters) { System.out.println(nh); }
+			System.out.println();
+
+			// Master List information
+			Id fileId = PersonalFileListHelper.masterListIdForFilename(fileName, m_env);
+			MasterListContent msc = new MasterListContent( fileId, masters );
+
+			// Upload the master list into the DHT
+			m_app.updateMasterList(fileName, Arrays.asList(masters) );
+
 			// create message for these nodes
 			MasterListMessage mlm = new MasterListMessage( msc );
-			
-			// update the PersonalFileList
+
+			// Update the PersonalFileList in the DHT
 			List<PersonalFileInfo> list = m_app.getPersonalFileList();
 			list.add( new PersonalFileInfo(fileName) );
 			m_app.updatePersonalFileList(list);
-			
+
 		} catch ( Exception e ) {
 			System.err.println( "Bad upload command.  Usage: upload <path> <# chunks>" );
 		}

@@ -8,18 +8,33 @@ import rice.pastry.commonapi.PastryIdFactory;
 public class PersonalFileListHelper {
 
 	/** Prefix for Personal File List entries in the DHT */
-	private static final String KEY_PREFIX = "PERSONAL_FILE_LIST";
+	private static final String PERSONAL_LIST_PREFIX = "PERSONAL_FILE_LIST";
+
+	/** Prefix for Master List entries in the DHT */
+	private static final String MASTER_LIST_PREFIX = "MASTER";
+
+
+	/**
+	 * Generate the Master List PastryId (the key for the DHT) for a given file name
+	 * @param filename the filename
+	 * @param env the common environment
+	 */
+	public static Id masterListIdForFilename(String filename, Environment env) {
+		PastryIdFactory localFactory = new PastryIdFactory(env);
+		String key = MASTER_LIST_PREFIX + filename;
+		return localFactory.buildId(key);
+	}
 
 
 	/**
 	 * Generate the Personal File List PastryId (the key for the DHT) for a given user
-	 * @param username the user's Username which when hashed gives the DHT Key
+	 * @param username the user's username which when hashed gives the DHT Key
 	 * @param env the common environment
 	 * @return key for this user's personal file list
 	 */
 	public static Id personalFileListIdForUsername(String username, Environment env) {
 		PastryIdFactory localFactory = new PastryIdFactory(env);
-		String key = KEY_PREFIX + username;
+		String key = PERSONAL_LIST_PREFIX + username;
 		return localFactory.buildId(key);
 	}
 
@@ -42,7 +57,7 @@ public class PersonalFileListHelper {
 	 */
 	public static Id personalFileListIdFromNodeId(Id nodeId, Environment env) {
 		PastryIdFactory localFactory = new PastryIdFactory(env);
-		String key = KEY_PREFIX + nodeId.toStringFull();
+		String key = PERSONAL_LIST_PREFIX + nodeId.toStringFull();
 		return localFactory.buildId(key);
 	}
 

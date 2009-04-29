@@ -99,6 +99,12 @@ public class RaidsApp extends PastImpl{
     /** The User's Personal File List */
     private List<PersonalFileInfo> m_personalFileList;
 
+    /** Cheap Lock */
+    private boolean m_isDone;
+
+    /** Volatile temporary data not really state... used in a lock */
+    private MasterListContent m_masterList;
+
     //private ProtocolApp m_pApp;
 
     private StorageApp ms;
@@ -126,6 +132,8 @@ public class RaidsApp extends PastImpl{
         m_hearts = new HashMap<Id, Timer>();
         m_thumps = new HashMap<Id, CancellableTask>();
         m_personalFileList = new ArrayList<PersonalFileInfo>();
+        m_isDone = true;
+        m_masterList = null;
 
         // Setup an EveReporter
         if ( eveHost == null ) {
@@ -237,6 +245,90 @@ public class RaidsApp extends PastImpl{
                 System.out.println("Successfully stored PersonalFileList for " + m_username + " at " + numSuccess + " locations.");
             }
         });
+    }
+
+
+// Master List Helpers
+
+    /**
+     * Grab the Master List for a File by using the file name (synchronous)
+     * @param filename the filename for which you want the Master List
+     * @return the Master List as it was stored in the DHT
+     */
+    public MasterListContent lookupMasterList(String filename) {
+    	Id fileId = PersonalFileListHelper.masterListIdForFilename(filename, m_node.getEnvironment());
+    	return lookupMasterList(fileId);
+    }
+
+    /**
+     * Grab the latest Master List For the Given Id (synchronous)
+     * @param id the PastryId for the Filename
+     */
+    public MasterListContent lookupMasterList(Id fileId) {
+
+    	// Locked Variables
+    	m_isDone = false;
+    	m_masterList = null;
+
+    	// Lookup
+        this.lookup(fileId, new Continuation<PastContent, Exception>() {
+            public void receiveException(Exception e) {}
+            public void receiveResult(PastContent result) {
+                m_masterList = (MasterListContent) result;
+                m_isDone = true; // release the lock
+            }
+        });
+
+        // Busy Wait to force this to be synchronous
+        synchronized (this) {
+            while ( !m_isDone ) {
+            	try {
+            		this.wait(500);
+            	} catch (InterruptedException e) {
+    				e.printStackTrace();
+            	}
+            }
+		}
+
+        // Return the List
+        return m_masterList;
+
+    }
+
+
+    /**
+     * Submit a new Master List for a File (asynchronous)
+     * @param filename the filename the Master List is for
+     * @param list the new Master List
+     */
+    public void updateMasterList(String filename, List<NodeHandle> list) {
+    	Id fileId = PersonalFileListHelper.masterListIdForFilename(filename, m_node.getEnvironment());
+    	updateMasterList(fileId, list);
+    }
+
+
+    /**
+     * Submit a new Master List for the Given Id (asynchronous)
+     * @param fileId id of the Pastry Filename
+     * @param list the new Master List
+     */
+    public void updateMasterList(final Id fileId, List<NodeHandle> list) {
+    	MasterListContent mlc = new MasterListContent(fileId, list);
+        insert(mlc, new Continuation<Boolean[], Exception>() {
+            public void receiveException(Exception e) { e.printStackTrace(); }
+            public void receiveResult(Boolean[] res) {
+                Boolean[] results = ((Boolean[]) res);
+                int numSuccess = 0;
+                for (int i = 0; i < results.length; i++) {
+                    Boolean b = results[i];
+                    if ( b.booleanValue() ) {
+                        numSuccess++;
+                    }
+                }
+                System.out.println("Successfully the MasterListContent for " + fileId.toString() + " at " + numSuccess + " locations.");
+            }
+        });
+
     }
 
 
