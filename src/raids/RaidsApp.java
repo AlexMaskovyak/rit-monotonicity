@@ -33,13 +33,13 @@ public class RaidsApp extends PastImpl{
 
 // Inner Classes
 
-    /**
-     * Private Inner Class.  Gets run when a heartbeat
-     * does not get fired!  Did the other node die?!
-     *
-     * @author Joseph Pecoraro
-     */
-    private class CardiacArrest extends TimerTask {
+	/**
+	 * Private Inner Class.  Gets run when a heartbeat
+	 * does not get fired!  Did the other node die?!
+	 *
+	 * @author Joseph Pecoraro
+	 */
+	private class CardiacArrest extends TimerTask {
 
         /** The Node Handle this Timer watches */
         private NodeHandle m_nodeHandle;
@@ -279,14 +279,22 @@ public class RaidsApp extends PastImpl{
     }
 
 
-    public void requestSpace(int num, long size){
+	/**
+	 * Access StoreApp's request space method, making the masters obtained 
+	 * visible to a client.
+	 * @param num number of nodes required.
+	 * @param size maximum storage size requested.
+	 * @return NodeHandles which have responded positively to our storage
+	 * 			request/master request.
+	 */
+	public NodeHandle[] requestSpace(int num, long size){
 
 /*	    System.out.println("Requesting Space Node "+endpoint.getLocalNodeHandle()+" anycasting "+size/num);
         ScribeContent myMessage = new StorageRequest(endpoint.getLocalNodeHandle(), "test");
      //   Topic myTopic = new Topic(m_node.getId());
 
-        m_scribe.publish(m_topic, myMessage);*/
-        ms.requestSpace(num, size);
+	    m_scribe.publish(m_topic, myMessage);*/
+		return ms.requestSpace(num, size);
 //		m_pApp.requestSpace(num, size);
     }
 
