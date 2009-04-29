@@ -14,6 +14,7 @@ import rice.p2p.scribe.ScribeImpl;
 import rice.p2p.scribe.Topic;
 import rice.pastry.commonapi.PastryIdFactory;
 import eve.EveReporter;
+import eve.EveType;
 
 /**
  * @author Kevin Cheek Based on Scribe tutorial
@@ -95,7 +96,7 @@ public class StorageApp implements ScribeClient, Application {
 			if( m_response > 0 ){
 				// m_nodes[ --m_response ] = ((StorageRequest) message).getFrom();
 				m_nodes[ --m_response ] = ((StorageRequest) message).getResponse();
-
+				m_reporter.log( ((StorageRequest) message).getResponse().getId().toStringFull(), m_node.getId().toStringFull(), EveType.MSG, "Storage Response" );
 				//		m_reporter.log(   m_node.getId().toStringFull(), ((StorageRequest) message).getFrom().getId().toStringFull(), EveType.MSG, "ScribeMulticast");
 							System.out.println("Got Storage Response: "
 									+ ((StorageRequest) message).getFrom().getId());
@@ -115,7 +116,7 @@ public class StorageApp implements ScribeClient, Application {
 		if( content instanceof StorageRequest ){
 			System.out.println("Got Storage Request... Sending response");
 
-		//		m_reporter.log(  ((StorageRequest)content).getFrom().getId().toStringFull(), m_node.getId().toStringFull(), EveType.MSG, "ScribeMulticast");
+			m_reporter.log(  ((StorageRequest)content).getFrom().getId().toStringFull(), m_node.getId().toStringFull(), EveType.MSG, "ScribeMulticast");
 			//   Message msg = new MyMsg(endpoint.getId(), nh.getId());
 			StorageRequest c = (StorageRequest)content;
 			c.setResponse( m_node.getLocalNodeHandle() );

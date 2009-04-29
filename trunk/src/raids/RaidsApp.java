@@ -355,6 +355,10 @@ public class RaidsApp extends PastImpl{
             HeartbeatMessage thump = (HeartbeatMessage) msg;
             NodeHandle thumper = thump.getHandle();
             setHeartbeatTimerForHandle(thumper);
+            m_reporter.log(thumper.getId().toStringFull(),
+            		m_node.getId().toStringFull(),
+            		EveType.MSG,
+            		"Heartbeat");
         }
 
         // ...
