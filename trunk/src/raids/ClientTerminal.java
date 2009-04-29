@@ -50,6 +50,9 @@ public class ClientTerminal extends Thread {
 	/** Help Command */
 	private static final String HELP = "help";
 
+	/** List Command */
+	private static final String LIST = "list";
+
 	/** Store */
 	private static final String STORE = "store";
 
@@ -132,16 +135,30 @@ public class ClientTerminal extends Thread {
 					helpCommand();
 				}
 
+				// List Command
+				else if ( line.startsWith(LIST) ) {
+					System.out.println();
+					for (RaidsApp app : m_apps) {
+						if ( app.equals(m_app) ) { System.out.println("---------"); }
+						app.status();
+						if ( app.equals(m_app) ) { System.out.println("---------"); }
+						System.out.println();
+					}
+				}
+
 				// TODO: Debug Method for Demonstration, remove once integrated normally
 				else if ( line.startsWith("cpr") ) {
 
+					line = line.replaceFirst("cpr", "").trim();
+
+					// Args
+					String[] args = line.split( " " );
+					int node1 = Integer.parseInt(args[0]);
+					int node2 = Integer.parseInt(args[1]);
+
 					// Link two nodes
-					RaidsApp alpha = m_apps.get(1);
-					RaidsApp beta  = m_apps.get(2);
-
-					System.out.println(alpha);
-					System.out.println(beta);
-
+					RaidsApp alpha = m_apps.get(node1);
+					RaidsApp beta  = m_apps.get(node2);
 					alpha.cpr(beta);
 					beta.cpr(alpha);
 
@@ -289,12 +306,13 @@ public class ClientTerminal extends Thread {
 	private void helpCommand() {
 		System.out.println();
 		System.out.println("Commands:");
-		System.out.println("  help      This help menu");
-		System.out.println("  kill [#]  Kills the given node, or the current if none is given");
-		System.out.println("  status    Prints status information on the current node");
-		System.out.println("  switch #  Switches to the given node");
-		System.out.println("  upload [path] # Chunks and uploads a file to a # nodes in the network");
-		System.out.println("  quit      Exits the client program");
+		System.out.println("  help             This help menu");
+		System.out.println("  list             Prints the status information of all nodes on this JVM");
+		System.out.println("  kill [#]         Kills the given node, or the current if none is given");
+		System.out.println("  status           Prints status information on the current node");
+		System.out.println("  switch #         Switches to the given node");
+		System.out.println("  upload [path] #  Chunks and uploads a file to a # nodes in the network");
+		System.out.println("  quit             Exits the client program");
 		System.out.println();
 	}
 
