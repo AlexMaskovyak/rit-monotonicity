@@ -6,12 +6,14 @@ import rice.p2p.scribe.ScribeContent;
 
 public class StorageRequest implements ScribeContent, Message{
 	private NodeHandle m_from;
+	private NodeHandle m_response;
 	private long m_size;
 
 	public StorageRequest(NodeHandle from, long size) {
 		super();
 		m_size = size;
 		m_from = from;
+		m_response = null;
 	}
 
 	public NodeHandle getFrom() {
@@ -27,8 +29,15 @@ public class StorageRequest implements ScribeContent, Message{
 
 	@Override
 	public int getPriority() {
-		// TODO Auto-generated method stub
 		return MAX_PRIORITY;
+	}
+
+	public NodeHandle getResponse() {
+		return m_response;
+	}
+
+	public void setResponse(NodeHandle response) {
+		m_response = response;
 	}
 
 
