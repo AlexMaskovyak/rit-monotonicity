@@ -1,6 +1,7 @@
 package raids;
 
 import java.io.File;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Vector;
@@ -98,21 +99,13 @@ public class ClientTerminal extends Thread {
 
 				// Status Command
 				if ( line.startsWith(STATUS) ) {
-					String id = m_app.getLocalNodeHandle().getId().toStringFull();
-					String name = m_app.getUsername();
-					System.out.println("Username: " + name);
-					System.out.println("ID: " + id);
+					m_app.status();
 				}
 
 				// Switch Command - Choose a node to command
 				else if ( line.startsWith(SWITCH) ) {
 					line = line.replaceFirst(SWITCH, "").trim();
-					try {
-						int switchTo = Integer.parseInt(line);
-						m_app = m_apps.get(switchTo);
-					} catch (Exception e) {
-						System.err.println("Bad switch command.  Usage: switch <switchNum>");
-					}
+					switchCommand(line);
 				}
 
 				// Kill Command
@@ -187,6 +180,22 @@ public class ClientTerminal extends Thread {
 // Command Functions
 
 	/**
+	 * Process a Switch Command
+	 * usage: switch <switchNum>
+	 * Switchs to the given node.
+	 */
+	private void switchCommand(String line) {
+		try {
+			int switchTo = Integer.parseInt(line);
+			m_app = m_apps.get(switchTo);
+		} catch (NumberFormatException e) {
+			System.err.println("Bad switch command.  Usage: switch <switchNum>");
+		} catch (Exception e) {
+			System.err.println("Bad switch command.  Use a number from 0 to " + (m_apps.size()-1) );
+		}
+	}
+
+	/**
 	 * Process a Kill Command
 	 * usage: kill [<killNum>]
 	 * Kills the given process, or "this" if kill Num is not provided
@@ -213,14 +222,14 @@ public class ClientTerminal extends Thread {
 	 */
 	private void uploadCommand(String line) {
 		try {
-			// obtain argumeents
+			// obtain arguments
 			String[] args = line.split( " " );
 			String path = args[ 0 ];
 			int chunks = Integer.parseInt( args[ 1 ] );
 
 			// split into path and filename
 			File f = new File( path );
-			String filePath = f.getParentFile().getAbsolutePath();
+			String filePath = f.getParentFile().getAbsolutePath() + "/";
 			String fileName = f.getName();
 
 			// chunk the file
@@ -229,6 +238,11 @@ public class ClientTerminal extends Thread {
 			// find storage nodes
 
 			// upload to these nodes
+
+			// update the PersonalFileList
+			List<PersonalFileInfo> list = m_app.getPersonalFileList();
+			list.add( new PersonalFileInfo(fileName) );
+			m_app.updatePersonalFileList(list);
 
 
 		} catch ( Exception e ) {
