@@ -14,6 +14,8 @@ import rice.environment.Environment;
  * Reads Commands from Standard Input, parses the input as
  * commands, and delegates actions to the provided Player.
  *
+ * @author Kevin Cheek
+ * @author Alex Maskovyak
  * @author Joseph Pecoraro
  */
 public class ClientTerminal extends Thread {
@@ -27,6 +29,9 @@ public class ClientTerminal extends Thread {
 
 	/** Quit Command */
 	private static final String QUIT = "quit";
+
+	/** Exit Command (Undocumented, but its the same as quit) */
+	private static final String EXIT = "exit";
 
 	/** Status Command */
 	private static final String STATUS = "status";
@@ -94,8 +99,8 @@ public class ClientTerminal extends Thread {
 			Scanner in = new Scanner( System.in );
 			String line = in.nextLine().trim();
 
-			// Loop until QUIT Command
-			while ( line != null && !line.startsWith(QUIT) ) {
+			// Loop until QUIT (or EXIT) Command
+			while ( line != null && !(line.startsWith(QUIT) || line.startsWith(EXIT)) ) {
 
 				// Status Command
 				if ( line.startsWith(STATUS) ) {
@@ -125,7 +130,7 @@ public class ClientTerminal extends Thread {
 					helpCommand();
 				}
 
-				// ...
+				// TODO: Debug Method for Demonstration, remove once integrated normally
 				else if ( line.startsWith("cpr") ) {
 
 					// Link two nodes
@@ -139,7 +144,8 @@ public class ClientTerminal extends Thread {
 					beta.cpr(alpha);
 
 				}
-				//Test Storage Requests
+
+				// TODO: Debug Method for Demonstration, remove once integrated normally
 				else if ( line.startsWith(STORE) ) {
 					System.out.println("Storing");
 					m_app.requestSpace(5, 20);
@@ -164,12 +170,7 @@ public class ClientTerminal extends Thread {
 			// Cleanup
 			in.close();
 
-			// Handle QUIT Message
-			// TODO: nice cleanup?
-
-		} catch ( NoSuchElementException e ) { // How Scanner reacts to a ^D
-			// TODO: nice cleanup?
-		}
+		} catch ( NoSuchElementException e ) {}
 
 		// Total Cleanup
 		m_env.destroy();
@@ -182,7 +183,7 @@ public class ClientTerminal extends Thread {
 	/**
 	 * Process a Switch Command
 	 * usage: switch <switchNum>
-	 * Switchs to the given node.
+	 * Switches to the given node.
 	 */
 	private void switchCommand(String line) {
 		try {
@@ -198,7 +199,7 @@ public class ClientTerminal extends Thread {
 	/**
 	 * Process a Kill Command
 	 * usage: kill [<killNum>]
-	 * Kills the given process, or "this" if kill Num is not provided
+	 * Kills the given process, or "this" if killNum is not provided
 	 */
 	private void killCommand(String line) {
 		if ( line.length() == 0 ) {
@@ -259,12 +260,12 @@ public class ClientTerminal extends Thread {
 	private void helpCommand() {
 		System.out.println();
 		System.out.println("Commands:");
-		System.out.println("  help      This help menu");
-		System.out.println("  kill [#]  Kills the given node, or the current if none is given");
-		System.out.println("  status    Prints status information on the current node");
-		System.out.println("  switch #  Switches to the given node");
-		System.out.println("  upload [path] # Chunks and uploads a file to a # nodes in the network");
-		System.out.println("  quit      Exits the client program");
+		System.out.println("  help             This help menu");
+		System.out.println("  kill [#]         Kills the given node, or the current if none is given");
+		System.out.println("  status           Prints status information on the current node");
+		System.out.println("  switch #         Switches to the given node");
+		System.out.println("  upload [path] #  Chunks and uploads a file to a # nodes in the network");
+		System.out.println("  quit             Exits the client program");
 		System.out.println();
 	}
 
