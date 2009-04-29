@@ -79,7 +79,7 @@ public class TestChunker extends TestCase {
 	    String reassembled = TEST_PATH + REASSEMBLED_PREFIX + TEXT_FILENAME;
 	    assertTrue( compareFiles(orig, reassembled) );
 	    assertTrue( compareFilesByHash( orig, reassembled ) );
-	    
+
 	    // Debug
 	    debugHashes( orig, reassembled );
 
@@ -207,7 +207,7 @@ public class TestChunker extends TestCase {
 
 	    // Debug
 	    debugHashes( orig, reassembled );
-	    
+
 	    // Delete Chunks (not final reassembled part)
 	    if ( DELETE_COMPONENTS ) {
 		    for (int i = 0; i < fileChunks.length; i++) {
@@ -215,13 +215,13 @@ public class TestChunker extends TestCase {
 				f.delete();
 			}
 	    }
-	    
-	    
+
+
 
 	}
 
 
-	// Private Helpers
+// Private Helpers
 
 	/**
 	 * Debug a file list
@@ -233,23 +233,23 @@ public class TestChunker extends TestCase {
 			System.out.println( list[i] );
 		}
 	}
-	
+
 	/**
 	 * Debug display of hash comparison.
 	 * @param filenames names of file to demonstrate hash comparison.
 	 */
 	private void debugHashes(String... filenames) {
-		for( int i = 0; i < filenames.length; ++i ) { 
-			
-			System.out.printf( 
+		for( int i = 0; i < filenames.length; ++i ) {
+
+			System.out.printf(
 				"Hash%d: %s File%d: %s\n",
 					i,
 					SHA1.getInstance().hash( new File( filenames[ i ] ) ),
-					i,					
+					i,
 					filenames[ i ] );
 		}
 	}
-	
+
 	/**
 	 * Quick Comparison of two files
 	 * @param filename1 name of the first file
