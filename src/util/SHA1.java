@@ -14,6 +14,8 @@ import java.security.NoSuchAlgorithmException;
 
 /**
  * Wrapper around Java's SHA1 Functionality implemented as a singleton.
+ * 
+ * @author Kevin Cheek
  * @author Alex Maskovyak
  * @author Joseph Pecoraro
  */
@@ -76,7 +78,6 @@ public class SHA1 {
 	 * Quick hash of a byte array.
 	 * @param bytes the byte array
 	 * @return the SHA1 hash of the byte array as a hex String
-	 * @throws NoSuchAlgorithmException
 	 */
 	public String hash( byte[] bytes ) {
 		m_MessageDigest.reset();
@@ -89,8 +90,6 @@ public class SHA1 {
 	 * Quick hash of a file.
 	 * @param p_File file whose contents are to be hashed.
 	 * @return the SHA1 hash of the file contents as a hex String.
-	 * @throws NoSuchAlgorithmException
-	 * @throws IOException
 	 */
 	public String hash( File p_File ) {
 		String hashValue = null;
@@ -109,7 +108,6 @@ public class SHA1 {
 	 * Quick hash of an input stream.
 	 * @param p_inStream inputstream whose contents are to be hashed.
 	 * @return the SHA1 hash of the inputstream contents as a hex String.
-	 * @throws NoSuchAlgorithmException
 	 */
 	public String hash( InputStream p_inStream ) {
 	    String hashValue = null;
@@ -130,7 +128,6 @@ public class SHA1 {
 	 * Quick hash of a String
 	 * @param the String
 	 * @return the SHA1 hash of the byte array as a hex String
-	 * @throws NoSuchAlgorithmException
 	 */
 	public String hash( String input ) {
 		return hash( input.getBytes() );
