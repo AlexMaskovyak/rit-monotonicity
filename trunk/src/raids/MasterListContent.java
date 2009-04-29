@@ -1,8 +1,6 @@
 package raids;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import rice.p2p.commonapi.Id;
