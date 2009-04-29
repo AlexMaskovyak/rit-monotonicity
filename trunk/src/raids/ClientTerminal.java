@@ -9,11 +9,12 @@ import java.util.Vector;
 import chunker.ChunkedFileInfo;
 
 import rice.environment.Environment;
+import rice.p2p.commonapi.NodeHandle;
 
 /**
  * Reads Commands from Standard Input, parses the input as
  * commands, and delegates actions to the provided Player.
- *
+ * 
  * @author Kevin Cheek
  * @author Alex Maskovyak
  * @author Joseph Pecoraro
@@ -41,7 +42,7 @@ public class ClientTerminal extends Thread {
 
 	/** Upload Command */
 	private static final String UPLOAD = "upload";
-
+	
 	/** Kill Command */
 	private static final String KILL = "kill";
 
@@ -124,7 +125,7 @@ public class ClientTerminal extends Thread {
 					line = line.replaceFirst(UPLOAD, "").trim();
 					uploadCommand(line);
 				}
-
+				
 				// Help Command
 				else if ( line.startsWith(HELP) ) {
 					helpCommand();
@@ -227,25 +228,32 @@ public class ClientTerminal extends Thread {
 			String[] args = line.split( " " );
 			String path = args[ 0 ];
 			int chunks = Integer.parseInt( args[ 1 ] );
-
+			
 			// split into path and filename
 			File f = new File( path );
-			String filePath = f.getParentFile().getAbsolutePath() + "/";
+			String filePath = f.getParentFile().getAbsolutePath();
 			String fileName = f.getName();
-
+			
 			// chunk the file
-			ChunkedFileInfo cfi = chunker.Chunker.chunk( filePath, fileName, chunks );
-
-			// find storage nodes
-
-			// upload to these nodes
-
+			ChunkedFileInfo cfi = 
+				chunker.Chunker.chunk( filePath, fileName, chunks );
+			
+			// find master storage nodes
+			NodeHandle[] masters = 
+				m_app.requestSpace( chunks, cfi.getMaxChunkSize() );
+			
+			// create masterlist
+			MasterListContent msc = 
+				new MasterListContent( m_app.getNode().getId(), masters );
+			
+			// create message for these nodes
+			MasterListMessage mlm = new MasterListMessage( msc );
+			
 			// update the PersonalFileList
 			List<PersonalFileInfo> list = m_app.getPersonalFileList();
 			list.add( new PersonalFileInfo(fileName) );
 			m_app.updatePersonalFileList(list);
-
-
+			
 		} catch ( Exception e ) {
 			System.err.println( "Bad upload command.  Usage: upload <path> <# chunks>" );
 		}
@@ -260,12 +268,12 @@ public class ClientTerminal extends Thread {
 	private void helpCommand() {
 		System.out.println();
 		System.out.println("Commands:");
-		System.out.println("  help             This help menu");
-		System.out.println("  kill [#]         Kills the given node, or the current if none is given");
-		System.out.println("  status           Prints status information on the current node");
-		System.out.println("  switch #         Switches to the given node");
-		System.out.println("  upload [path] #  Chunks and uploads a file to a # nodes in the network");
-		System.out.println("  quit             Exits the client program");
+		System.out.println("  help      This help menu");
+		System.out.println("  kill [#]  Kills the given node, or the current if none is given");
+		System.out.println("  status    Prints status information on the current node");
+		System.out.println("  switch #  Switches to the given node");
+		System.out.println("  upload [path] # Chunks and uploads a file to a # nodes in the network");
+		System.out.println("  quit      Exits the client program");
 		System.out.println();
 	}
 

@@ -21,7 +21,6 @@ public class HeartbeatMessage implements Message {
 		m_fromHandle = fromHandle;
 	}
 
-
 	/**
 	 * Default Priority
 	 */
