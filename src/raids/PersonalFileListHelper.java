@@ -12,6 +12,19 @@ public class PersonalFileListHelper {
 
 
 	/**
+	 * Generate the Personal File List PastryId (the key for the DHT) for a given user
+	 * @param username the user's Username which when hashed gives the DHT Key
+	 * @param env the common environment
+	 * @return key for this user's personal file list
+	 */
+	public static Id personalFileListIdForUsername(String username, Environment env) {
+		PastryIdFactory localFactory = new PastryIdFactory(env);
+		String key = KEY_PREFIX + username;
+		return localFactory.buildId(key);
+	}
+
+
+	/**
 	 * Generate the Personal File List PastryId (the key for the DHT) for a given Node
 	 * @param node the node for which we generate their personal file list key
 	 * @return key for this node's personal file list
