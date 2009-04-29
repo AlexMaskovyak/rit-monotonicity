@@ -222,7 +222,7 @@ public class RaidsApp extends PastImpl{
     public void updatePersonalFileList(List<PersonalFileInfo> list) {
         m_personalFileList = list;
         Id storageId = PersonalFileListHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
-        PersonalFileListContent pfl = new PersonalFileListContent(storageId);
+        PersonalFileListContent pfl = new PersonalFileListContent(storageId, m_personalFileList);
         insert(pfl, new Continuation<Boolean[], Exception>() {
             public void receiveException(Exception e) { e.printStackTrace(); }
             public void receiveResult(Boolean[] res) {
@@ -280,7 +280,7 @@ public class RaidsApp extends PastImpl{
 
 
 	/**
-	 * Access StoreApp's request space method, making the masters obtained 
+	 * Access StoreApp's request space method, making the masters obtained
 	 * visible to a client.
 	 * @param num number of nodes required.
 	 * @param size maximum storage size requested.
