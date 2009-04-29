@@ -252,6 +252,7 @@ public class ClientTerminal extends Thread {
 			}
 
 			// Debug for Demonstration
+			System.out.println();
 			System.out.println("Nodes That Will Accept Storage: ");
 			for (NodeHandle nh : storageNodes) { System.out.println(nh); }
 			System.out.println();

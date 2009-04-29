@@ -1,16 +1,19 @@
 package raids;
 
-import java.io.IOException;
-
-import eve.EveReporter;
-import eve.EveType;
-import rice.p2p.commonapi.*;
+import rice.p2p.commonapi.Application;
+import rice.p2p.commonapi.Endpoint;
+import rice.p2p.commonapi.Id;
+import rice.p2p.commonapi.Message;
+import rice.p2p.commonapi.Node;
+import rice.p2p.commonapi.NodeHandle;
+import rice.p2p.commonapi.RouteMessage;
 import rice.p2p.scribe.Scribe;
 import rice.p2p.scribe.ScribeClient;
 import rice.p2p.scribe.ScribeContent;
 import rice.p2p.scribe.ScribeImpl;
 import rice.p2p.scribe.Topic;
 import rice.pastry.commonapi.PastryIdFactory;
+import eve.EveReporter;
 
 /**
  * @author Kevin Cheek Based on Scribe tutorial
@@ -90,7 +93,9 @@ public class StorageApp implements ScribeClient, Application {
 		//  System.out.println("Deliver1");
 		if( message instanceof StorageRequest ){
 			if( m_response > 0 ){
-				m_nodes[ --m_response ] = ((StorageRequest) message).getFrom();
+				// m_nodes[ --m_response ] = ((StorageRequest) message).getFrom();
+				m_nodes[ --m_response ] = ((StorageRequest) message).getResponse();
+
 				//		m_reporter.log(   m_node.getId().toStringFull(), ((StorageRequest) message).getFrom().getId().toStringFull(), EveType.MSG, "ScribeMulticast");
 							System.out.println("Got Storage Response: "
 									+ ((StorageRequest) message).getFrom().getId());
@@ -112,8 +117,9 @@ public class StorageApp implements ScribeClient, Application {
 
 		//		m_reporter.log(  ((StorageRequest)content).getFrom().getId().toStringFull(), m_node.getId().toStringFull(), EveType.MSG, "ScribeMulticast");
 			//   Message msg = new MyMsg(endpoint.getId(), nh.getId());
-			endpoint.route(null, ((StorageRequest) content),
-					((StorageRequest) content).getFrom());
+			StorageRequest c = (StorageRequest)content;
+			c.setResponse( m_node.getLocalNodeHandle() );
+			endpoint.route(null, c, ((StorageRequest) content).getFrom());
 		}
 	}
 
