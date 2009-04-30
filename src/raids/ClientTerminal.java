@@ -70,10 +70,9 @@ public class ClientTerminal extends Thread {
 	private Environment m_env;
 
 
-
 	/**
 	 * Basic Constructor
-	 * @param app the RaidsApp this is delegating to
+	 * @param apps the RaidsApp this is delegating to
 	 */
 	public ClientTerminal(Vector<RaidsApp> apps, Environment env) {
 		m_env = env;
