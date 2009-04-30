@@ -14,7 +14,7 @@ import java.security.NoSuchAlgorithmException;
 
 /**
  * Wrapper around Java's SHA1 Functionality implemented as a singleton.
- * 
+ *
  * @author Kevin Cheek
  * @author Alex Maskovyak
  * @author Joseph Pecoraro
@@ -126,7 +126,7 @@ public class SHA1 {
 
 	/**
 	 * Quick hash of a String
-	 * @param the String
+	 * @param input the String
 	 * @return the SHA1 hash of the byte array as a hex String
 	 */
 	public String hash( String input ) {

@@ -42,9 +42,8 @@ public class StorageApp implements ScribeClient, Application {
 	 * The constructor for this scribe client. It will construct the
 	 * ScribeApplication.
 	 *
-	 * @param node
-	 *            the PastryNode
-	 * @param m_reporter
+	 * @param node the PastryNode
+	 * @param reporter an EveReporter for logging
 	 */
 	public StorageApp(Node node, EveReporter reporter) {
 		// you should recognize this from lesson 3
