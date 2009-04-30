@@ -225,7 +225,7 @@ public class TestChunker extends TestCase {
 
 	/**
 	 * Debug a file list
-	 * @list List of Strings to print out
+	 * @param list List of Strings to print out
 	 */
 	private void debugList(String[] list) {
 		System.out.println( "Files: (" + list.length + ")" );
