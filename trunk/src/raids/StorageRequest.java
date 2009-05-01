@@ -5,6 +5,7 @@ import rice.p2p.commonapi.NodeHandle;
 import rice.p2p.scribe.ScribeContent;
 
 public class StorageRequest implements ScribeContent, Message{
+	private static final long serialVersionUID = -9222355288468873754L;
 	private NodeHandle m_from;
 	private NodeHandle m_response;
 	private long m_size;
