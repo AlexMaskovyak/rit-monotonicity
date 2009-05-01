@@ -1,5 +1,7 @@
 package raids;
 
+import java.util.concurrent.FutureTask;
+
 import rice.p2p.commonapi.Application;
 import rice.p2p.commonapi.Endpoint;
 import rice.p2p.commonapi.Id;
@@ -17,26 +19,31 @@ import eve.EveReporter;
 import eve.EveType;
 
 /**
- * @author Kevin Cheek Based on Scribe tutorial
+ * The storage app is responsible for multi-casting storage requests.
+ *
+ * @author Kevin Cheek
+ * Based on Scribe tutorial
  */
 @SuppressWarnings("deprecation")
 public class StorageApp implements ScribeClient, Application {
+	//How long the app will wait for a request before timing out
+	private static final long m_TIMEOUT = 5000;
 
-	Scribe m_scribe;
+	private Scribe m_scribe; //Instance of the scribe implementation
 
-	Topic m_topic;
+	private Topic m_topic; //Topic for the multicasts
 
-	private Endpoint endpoint;
+	private Endpoint endpoint; //End point for this node
 
-	private boolean m_isDone;
+	private boolean m_isDone; //Flag for when a request has completed
 
-	private NodeHandle[] m_nodes;
+	private NodeHandle[] m_nodes; //Reference to nodes responding to a request
 
-	private int m_response;
+	private int m_response; //Number of responses requested for a multicast
 
-	private EveReporter m_reporter;
+	private EveReporter m_reporter; //Debugging
 
-	private Node m_node;
+	private Node m_node; //The node this application is attached to
 
 	/**
 	 * The constructor for this scribe client. It will construct the
@@ -46,59 +53,81 @@ public class StorageApp implements ScribeClient, Application {
 	 * @param reporter an EveReporter for logging
 	 */
 	public StorageApp(Node node, EveReporter reporter) {
-		// you should recognize this from lesson 3
-		this.endpoint = node.buildEndpoint(this, "myinstance");
+		this.endpoint = node.buildEndpoint(this, "StorageApp");
 
 		// construct Scribe
-		m_scribe = new ScribeImpl(node, "myScribeInstance");
+		m_scribe = new ScribeImpl(node, "StorageApp");
 
-		// construct the topic
-		m_topic = new Topic(new PastryIdFactory(node.getEnvironment()), "example topic");
+		// Build a topic for publish/subscribe
+		m_topic = new Topic(new PastryIdFactory(node.getEnvironment()), "storage request");
 		System.out.println("myTopic = " + m_topic);
 
-		// now we can receive messages
+		//Register the end point since we are not using the one from past.
 		endpoint.register();
+
+		/*Subscribe to the topic, notify anyone that is watching the thread that we finished
+			then setup the node and eve */
 		m_scribe.subscribe(m_topic, this);
 		m_isDone = true;
 		m_reporter = reporter;
 		m_node = node;
 	}
 
+	/**
+	 * This function will request space on all available nodes then block until enough
+	 * responses come back that it can successfully complete its task.
+	 *
+	 * @param num	The number of chunks to distribute.
+	 * @param size 	Maximum chunk size
+	 * @return		An array of NodeHandles for the nodes that responded or null if it times out
+	 */
 	public NodeHandle[] requestSpace(int num, long size) {
 		System.out.println("requestSpace");
 		ScribeContent myMessage = new StorageRequest(endpoint.getLocalNodeHandle(), size);
-		//	    MyScribeContent myMessage = new MyScribeContent(endpoint.getLocalNodeHandle(), seqNum++);
 		m_isDone = false;
 		m_response = num;
 		m_nodes = new NodeHandle[num];
 		m_scribe.publish(m_topic, myMessage);
-		//sendMulticast();
 
+		Long startTime = System.currentTimeMillis();
 		synchronized( this ){
 			while( !m_isDone ){
 				try{
+					/*
+					 * Extremely primitive timeout feature, but because messages are delivered
+					 * in an asynchronous manner via the deliver method this is the
+					 * easiest method of accomplishing this task.
+					 */
+					if( System.currentTimeMillis() - startTime > m_TIMEOUT )
+						return null;
 					this.wait(500);
 				}catch( InterruptedException e ){
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
 		}
+
 		return m_nodes;
 	}
 
 	/**
+	 * This method is called when the node receives a direct message. If the message
+	 * received is a response to a storage request then add the node handle to a list of nodes
+	 * if enough of the nodes have responded ignore futher responses.
+	 *
+	 * @param id		The message id.
+	 * @param message 	The message content.
 	 */
 	public void deliver(Id id, Message message) {
-		//  System.out.println("Deliver1");
 		if( message instanceof StorageRequest ){
 			if( m_response > 0 ){
-				// m_nodes[ --m_response ] = ((StorageRequest) message).getFrom();
 				m_nodes[ --m_response ] = ((StorageRequest) message).getResponse();
-				m_reporter.log( ((StorageRequest) message).getResponse().getId().toStringFull(), m_node.getId().toStringFull(), EveType.MSG, "Storage Response" );
-				//		m_reporter.log(   m_node.getId().toStringFull(), ((StorageRequest) message).getFrom().getId().toStringFull(), EveType.MSG, "ScribeMulticast");
-							System.out.println("Got Storage Response: "
-									+ ((StorageRequest) message).getFrom().getId());
+				m_reporter.log(
+						((StorageRequest) message).getResponse().getId().toStringFull(),
+						m_node.getId().toStringFull(), EveType.MSG,
+						"Storage Response");
+				System.out.println("Got Storage Response: "
+						+ ((StorageRequest) message).getFrom().getId());
 			}else{
 				m_isDone = true;
 			}
@@ -107,25 +136,32 @@ public class StorageApp implements ScribeClient, Application {
 	}
 
 	/**
-	 * Called whenever we receive a published message.
+	 * This method is called when the node received a multicast message. If the message
+	 * received is a storage request we will check for free space then send a response
+	 * back to the originating node if we have enough available space.
+	 *
+	 * @param topic		The topic that this node was subscribed to.
+	 * @param content 	The content contained in the message received.
 	 */
 	public void deliver(Topic topic, ScribeContent content) {
-	/*	System.out.println("MyScribeClient.deliver(" + topic + "," + content
-				+ ")");*/
 		if( content instanceof StorageRequest ){
 			System.out.println("Got Storage Request... Sending response");
 
-			m_reporter.log(  ((StorageRequest)content).getFrom().getId().toStringFull(), m_node.getId().toStringFull(), EveType.MSG, "ScribeMulticast");
-			//   Message msg = new MyMsg(endpoint.getId(), nh.getId());
-			StorageRequest c = (StorageRequest)content;
-			c.setResponse( m_node.getLocalNodeHandle() );
+			//TODO: Add check for available storage space
+
+			m_reporter.log(
+					((StorageRequest) content).getFrom().getId().toStringFull(),
+					m_node.getId().toStringFull(), EveType.MSG,
+					"ScribeMulticast");
+			StorageRequest c = (StorageRequest) content;
+			c.setResponse(m_node.getLocalNodeHandle());
 			endpoint.route(null, c, ((StorageRequest) content).getFrom());
 		}
 	}
 
+
 	/**
-	 * Called when we receive an anycast. If we return false, it will be
-	 * delivered elsewhere. Returning true stops the message here.
+	 * Called if an Anycast message is recieved.
 	 */
 	public boolean anycast(Topic topic, ScribeContent content) {
 		/*	boolean returnValue = m_scribe.getEnvironment().getRandomSource().nextInt(
@@ -155,22 +191,21 @@ public class StorageApp implements ScribeClient, Application {
 		//		debug("inside forward");
 
 		// Try out Eve
-/*		System.out.println("Inside forward me: " + m_node.getId()
-				+ " Destination: " + ((StorageRequest) msg.getMessage()).getFrom().getId().toString() );
-		if( msg.getMessage() instanceof StorageRequest ){
-			System.out.println("insidefloop");
-			if( ((StorageRequest) msg.getMessage()).getPrevHop() != null ){
-				//		System.out.println("Forward From: " + ((StorageRequest)msg.getMessage(endpoint.getDeserializer()).getPrevHop().getId().toString() + " to: "+ msg.getNextHopHandle().getId().toString());
-				m_reporter.log(
-						m_node.getId().toStringFull(),
-						((StorageRequest) msg.getMessage()).getPrevHop().getId().toStringFull(),
-						EveType.MSG, "ScribeMulticast");
-			}*/
-			//	((StorageRequest)msg.getMessage()).addHop(m_node.getLocalNodeHandle());
-	//		((StorageRequest) msg.getMessage()).addHop(m_node.getLocalNodeHandle());
-
-			/*		((StorageRequest)msg.getMessage()).prevHop = m_node.getLocalNodeHandle();
-					((StorageRequest)msg.getMessage()).test();*/
+		/*		System.out.println("Inside forward me: " + m_node.getId()
+						+ " Destination: " + ((StorageRequest) msg.getMessage()).getFrom().getId().toString() );
+				if( msg.getMessage() instanceof StorageRequest ){
+					System.out.println("insidefloop");
+					if( ((StorageRequest) msg.getMessage()).getPrevHop() != null ){
+						//		System.out.println("Forward From: " + ((StorageRequest)msg.getMessage(endpoint.getDeserializer()).getPrevHop().getId().toString() + " to: "+ msg.getNextHopHandle().getId().toString());
+						m_reporter.log(
+								m_node.getId().toStringFull(),
+								((StorageRequest) msg.getMessage()).getPrevHop().getId().toStringFull(),
+								EveType.MSG, "ScribeMulticast");
+					}*/
+		//	((StorageRequest)msg.getMessage()).addHop(m_node.getLocalNodeHandle());
+		//		((StorageRequest) msg.getMessage()).addHop(m_node.getLocalNodeHandle());
+		/*		((StorageRequest)msg.getMessage()).prevHop = m_node.getLocalNodeHandle();
+				((StorageRequest)msg.getMessage()).test();*/
 		//}
 		return true;
 	}
