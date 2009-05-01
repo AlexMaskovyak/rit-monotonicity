@@ -1,7 +1,5 @@
 package raids;
 
-import java.util.concurrent.FutureTask;
-
 import rice.p2p.commonapi.Application;
 import rice.p2p.commonapi.Endpoint;
 import rice.p2p.commonapi.Id;
