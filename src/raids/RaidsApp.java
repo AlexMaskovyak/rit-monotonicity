@@ -109,6 +109,8 @@ public class RaidsApp extends PastImpl{
 
     private StorageApp ms;
 
+    private Endpoint m_raidsEndpoint;
+
 
     /**
      * Basic Constructor that rides on top of the PastImpl Constructor
@@ -134,6 +136,9 @@ public class RaidsApp extends PastImpl{
         m_personalFileList = new ArrayList<PersonalFileInfo>();
         m_isDone = true;
         m_masterList = null;
+        m_raidsEndpoint = m_node.buildEndpoint(this, "x");
+        m_raidsEndpoint.register();
+
 
         // Setup an EveReporter
         if ( eveHost == null ) {
@@ -145,8 +150,8 @@ public class RaidsApp extends PastImpl{
         // Register Name:Id pair with Eve
         m_reporter.log(username, null, EveType.REGISTER, this.getLocalNodeHandle().getId().toStringFull());
 
+        // Create the StorageApp for Multicasts
         ms = new StorageApp( node, m_reporter );
-
 
         // Setup the PersonalFileList
         Id storageId = PersonalFileListHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
@@ -163,8 +168,8 @@ public class RaidsApp extends PastImpl{
             }
         });
 
-
     }
+
 
 // Heartbeat Helpers
 
@@ -350,7 +355,7 @@ public class RaidsApp extends PastImpl{
 
         // Heartbeat message
         if ( msg instanceof HeartbeatMessage ) {
-            debug("received message");
+            debug("received HeartbeatMessage");
             debug(msg.toString());
             HeartbeatMessage thump = (HeartbeatMessage) msg;
             NodeHandle thumper = thump.getHandle();
@@ -359,6 +364,17 @@ public class RaidsApp extends PastImpl{
             		m_node.getId().toStringFull(),
             		EveType.MSG,
             		"Heartbeat");
+        }
+
+        // DumbMessage
+        // TODO: REmove, debug
+        else if ( msg instanceof DumbMessage ) {
+        	debug("x");
+        }
+
+        // MasterListMessage message
+        else if ( msg instanceof MasterListMessage ) {
+        	debug("received MasterListMessage");
         }
 
         // ...
@@ -405,7 +421,10 @@ public class RaidsApp extends PastImpl{
         // m_reporter.log(m_username, msg.getNextHopHandle().getId().toStringFull(), EveType.FORWARD, "I'm routing a message!");
 
         // Delegate the normal details to the PastImpl
-        return super.forward(msg);
+    	try {
+    		return super.forward(msg);
+    	} catch (Exception e) {}
+    	return true;
     }
 
 
@@ -482,6 +501,10 @@ public class RaidsApp extends PastImpl{
         m_personalFileList = personalFileList;
     }
 
+	public Endpoint getRaidsEndpoint() {
+		return m_raidsEndpoint;
+	}
+
 
 // Debug
 
@@ -495,9 +518,9 @@ public class RaidsApp extends PastImpl{
         setHeartbeatTimerForHandle( other.getLocalNodeHandle() );
 
         // Start sending messages to the other side
-        Endpoint endpoint = m_node.buildEndpoint(other, "heartbeating");
-        endpoint.register();
-        CancellableTask task = endpoint.scheduleMessageAtFixedRate(new HeartbeatMessage(m_node.getLocalNodeHandle()), INITIAL_SEND_HEARTBEAT, SEND_HEARTBEAT);
+	    Endpoint endpoint = m_node.buildEndpoint(other, "heartbeating");
+	    endpoint.register();
+	    CancellableTask task = endpoint.scheduleMessageAtFixedRate(new HeartbeatMessage(m_node.getLocalNodeHandle()), INITIAL_SEND_HEARTBEAT, SEND_HEARTBEAT);
 
         // Save it as cancellable
         // TODO: Synchronize?
@@ -512,8 +535,6 @@ public class RaidsApp extends PastImpl{
     private void debug(String str) {
         System.out.println( getLocalNodeHandle().getId().toStringFull() + ": " + str);
     }
-
-
 
 
 }

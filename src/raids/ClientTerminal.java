@@ -1,6 +1,7 @@
 package raids;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -9,6 +10,7 @@ import java.util.Vector;
 
 import rice.environment.Environment;
 import rice.p2p.commonapi.Id;
+import rice.p2p.commonapi.Message;
 import rice.p2p.commonapi.NodeHandle;
 import chunker.ChunkedFileInfo;
 
@@ -195,6 +197,29 @@ public class ClientTerminal extends Thread {
 
 	}
 
+// Private Helpers
+
+
+	/**
+	 * Send a Direct Message to a Node identified by the given NodeHandle
+	 * @param msg the Message to send
+	 * @param nh the Node to send the message to
+	 */
+	private void routeDirectMessage(Message msg, NodeHandle nh) {
+		System.out.println(m_app.toString() +" sending direct to " + nh.toString());
+
+		// TODO: How can we change this so it will work across a network?
+		// We need the other "Applications" Endpoint.  I have no idea.
+		for (RaidsApp a : m_apps) {
+			if ( a.getLocalNodeHandle().equals(nh) ) {
+				a.getRaidsEndpoint().route(null, msg, nh);
+				return;
+			}
+		}
+
+		System.err.println("No Such NodeHandle");
+	}
+
 
 // Command Functions
 
@@ -243,7 +268,6 @@ public class ClientTerminal extends Thread {
 		try {
 
 			// obtain arguments
-			// TODO: Add error checking to this parsing
 			String[] args = line.split( " " );
 			String path = args[ 0 ];
 			int chunks = Integer.parseInt( args[ 1 ] );
@@ -278,20 +302,33 @@ public class ClientTerminal extends Thread {
 
 			// Master List information
 			Id fileId = PersonalFileListHelper.masterListIdForFilename(fileName, m_env);
-			MasterListContent msc = new MasterListContent( fileId, masters );
 
 			// Upload the master list into the DHT
 			m_app.updateMasterList(fileName, Arrays.asList(masters) );
-
-			// create message for these nodes
-			MasterListMessage mlm = new MasterListMessage( msc );
 
 			// Update the PersonalFileList in the DHT
 			List<PersonalFileInfo> list = m_app.getPersonalFileList();
 			list.add( new PersonalFileInfo(fileName) );
 			m_app.updatePersonalFileList(list);
 
+			// Create the lists to be sent out in the MasterListMessage
+			List<NodeHandle> masterList = Arrays.asList(masters);
+			List<NodeHandle>[] parts = new List[chunks];
+			for (int i = 0; i < chunks; i++) {
+				List l = new ArrayList<NodeHandle>();
+				l.add( storageNodes[i] );
+				parts[i] = l;
+			}
+
+			// Create the MasterListMessage and send it to everyone who needs it
+			MasterListMessage mlm = new MasterListMessage(masterList, parts, fileId);
+			System.out.println(mlm);
+			for (NodeHandle nh : storageNodes) {
+				routeDirectMessage(mlm, nh);
+			}
+
 		} catch ( Exception e ) {
+			e.printStackTrace();
 			System.err.println( "Bad upload command.  Usage: upload <path> <# chunks>" );
 		}
 
