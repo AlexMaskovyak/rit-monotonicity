@@ -170,7 +170,7 @@ public class Client {
 				config.setProperty("EVE_HOST", args[5]);
 				config.setProperty("EVE_PORT", args[6]);
 			} else {
-				config.setProperty("EVE_HOST", null);
+				//config.setProperty("EVE_HOST", "");
 				config.setProperty("EVE_PORT", "0");
 			}
 
