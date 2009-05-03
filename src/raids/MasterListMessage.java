@@ -5,6 +5,7 @@ import java.util.List;
 import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.Message;
 import rice.p2p.commonapi.NodeHandle;
+import rice.p2p.past.ContentHashPastContent;
 import rice.p2p.past.Past;
 import rice.p2p.past.PastContent;
 import rice.p2p.past.PastContentHandle;
@@ -19,9 +20,14 @@ import rice.p2p.past.PastException;
  * @author Alex Maskovyak
  * @author Joseph Pecoraro
  */
-public class MasterListMessage implements Message, PastContent {
+public class MasterListMessage extends ContentHashPastContent implements Message {
 
-    /** Parts Map */
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 3588250315167081680L;
+
+	/** Parts Map */
     private List<NodeHandle>[] m_parts;
 
     /** Lookup Id */
@@ -35,6 +41,7 @@ public class MasterListMessage implements Message, PastContent {
      * @param parts the Map of Part numbers to their list
      */
     public MasterListMessage(Id lookupId, List<NodeHandle>[] parts) {
+    	super( lookupId );
         setParts( parts );
         setLookupId( lookupId );
     }
@@ -77,33 +84,4 @@ public class MasterListMessage implements Message, PastContent {
     public void setLookupId(Id lookupId) {
         m_lookupId = lookupId;
     }
-
-
-    
-	@Override
-	public PastContent checkInsert(Id arg0, PastContent arg1)
-			throws PastException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	@Override
-	public PastContentHandle getHandle(Past arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Id getId() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean isMutable() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 }

@@ -287,7 +287,6 @@ public class ClientTerminal extends Thread {
 			// make the first 3 masters (arbitrary)
 			List<NodeHandle>[] masters = new ArrayList[ chunks ];
 			
-			int[] blah = new int[5];
 			for( int i = 0; i < chunks; ++i ) {
 				masters[ i ] = new ArrayList<NodeHandle>();
 				masters[ i ].add( storageNodes[ i ] );
