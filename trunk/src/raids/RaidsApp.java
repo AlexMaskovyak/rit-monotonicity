@@ -1,11 +1,7 @@
 package raids;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import rice.Continuation;
 import rice.p2p.commonapi.Application;
@@ -34,40 +30,6 @@ public class RaidsApp implements Application {
 
 
 // Inner Classes
-
-	/**
-	 * Private Inner Class.  Gets run when a Heartbeat
-	 * does not get fired!  This means the other node died!
-	 *
-	 * @author Joseph Pecoraro
-	 */
-	private class CardiacArrest extends TimerTask {
-
-        /** The Node Handle this Timer watches */
-        private NodeHandle m_nodeHandle;
-
-        /**
-         * Basic Constructor
-         * @param handle the node handle of the node this observers
-         */
-        public CardiacArrest(NodeHandle handle) {
-            m_nodeHandle = handle;
-        }
-
-        /**
-         * Handle the missed Heartbeat
-         * TODO: Fault Tolerance requirement: duplicate part on a new node...
-         */
-        public void run() {
-            debug("Missed our heartbeat for: " + m_nodeHandle.getId().toStringFull() );
-            debug("Stopping Sending our thumps to it");
-            synchronized (m_sendingThumpsTo) {
-            	m_sendingThumpsTo.remove( m_nodeHandle );
-			}
-        }
-
-    }
-
 
 	/**
 	 * Empty Self Reminder Message
@@ -153,18 +115,6 @@ public class RaidsApp implements Application {
 	}
 
 
-// Constants
-
-    /** Check Heartbeat Time */
-    private static final int CHECK_HEARTBEAT = 5000; /* 5 seconds */
-
-    /** Send Heartbeat Thump Time */
-    private static final int SEND_HEARTBEAT = 1000; /* 1 second */
-
-    /** Initial Send Heartbeat Thump Time */
-    private static final int INITIAL_SEND_HEARTBEAT = 3000; /* 3 second */
-
-
 // Fields
 
     /** PAST */
@@ -175,12 +125,6 @@ public class RaidsApp implements Application {
 
     /** Username */
     private String m_username;
-
-    /** Listening Heartbeat Timers */
-    private Map<Id, Timer> m_hearts;
-
-    /** List of Nodes to send a Heartbeat thump to */
-    private ArrayList<NodeHandle> m_sendingThumpsTo;
 
     /** The actual pastry node */
     private Node m_node;
@@ -196,6 +140,9 @@ public class RaidsApp implements Application {
 
     /** Volatile temporary data not really state... used in a lock */
     private MasterListMessage m_masterList;
+
+    /** Handle the Heartbeat Stuff */
+    private HeartHandler m_heartHandler;
 
     /** Self-Reminder Message (currently just for Heartbeats) */
     private CancellableTask m_selfTask;
@@ -223,11 +170,10 @@ public class RaidsApp implements Application {
         m_dead = false;
         m_node = node;
         m_username = username;
-        m_hearts = new HashMap<Id, Timer>();
         m_personalFileList = new ArrayList<PersonalFileInfo>();
         m_isDone = true;
         m_masterList = null;
-        m_sendingThumpsTo = new ArrayList<NodeHandle>();
+        m_heartHandler = new HeartHandler(this);
 
         // Setup an EveReporter
         if ( eveHost == null ) {
@@ -249,7 +195,8 @@ public class RaidsApp implements Application {
         m_myapp = new MyApp(node, this);
 
         // Reminder to send Heartbeats
-        m_selfTask = m_myapp.getEndpoint().scheduleMessageAtFixedRate( new SelfReminder(), INITIAL_SEND_HEARTBEAT, SEND_HEARTBEAT );
+        m_selfTask = m_myapp.getEndpoint().scheduleMessageAtFixedRate( new SelfReminder(),
+        		HeartHandler.INITIAL_SEND_HEARTBEAT, HeartHandler.SEND_HEARTBEAT );
 
         // Setup the PersonalFileList
         Id storageId = PersonalFileListHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
@@ -266,83 +213,6 @@ public class RaidsApp implements Application {
             }
         });
 
-    }
-
-
-// Heartbeat Helpers
-
-    /**
-     * Reset the Heartbeat Timer for a NodeHandle
-     * @param other the NodeHandle to listen for
-     */
-    private void setHeartbeatTimerForHandle(NodeHandle other) {
-        synchronized (m_hearts) {
-
-            // Cancel the Previous Timer (if there was one)
-            cancelHeartbeatTimer(other);
-
-            // Set a new Timer
-            Timer cpr = new Timer(true);
-            cpr.schedule( new CardiacArrest(other), CHECK_HEARTBEAT);
-            m_hearts.put(other.getId(), cpr);
-
-        }
-    }
-
-
-    /**
-     * Remove the Heartbeat Timer for a NodeHandle
-     * @param other the NodeHandle to remove the listener for
-     */
-    private void cancelHeartbeatTimer(NodeHandle other) {
-    	synchronized (m_hearts) {
-            Timer cpr = m_hearts.get(other.getId());
-            if ( cpr != null ) {
-                cpr.purge();
-                cpr.cancel();
-                m_hearts.remove(cpr);
-            }
-		}
-    }
-
-
-    /**
-     * Send Heartbeats to a Node
-     * @param nh the node to start sending thumps to
-     */
-    public void sendHeartbeatsTo(NodeHandle nh) {
-    	synchronized (m_sendingThumpsTo) {
-			m_sendingThumpsTo.add(nh);
-		}
-    }
-
-
-    /**
-     * Stop Sending Heartbeats to a Node
-     * @param nh the node to stop sending thumps to
-     */
-    public void stopSendingHeartbeatsTo(NodeHandle nh) {
-    	synchronized (m_sendingThumpsTo) {
-			m_sendingThumpsTo.remove(nh);
-		}
-    }
-
-
-    /**
-     * Listen for Heartbeats from a Node
-     * @param nh the node to start listening to
-     */
-    public void listenForHearbeatsFrom(NodeHandle nh) {
-    	setHeartbeatTimerForHandle(nh);
-    }
-
-
-    /**
-     * Stop Listening for Heartbeats from a Node
-     * @param nh the node to stop listening to
-     */
-    public void stopListeningForHeartbeatsFrom(NodeHandle nh) {
-    	cancelHeartbeatTimer(nh);
     }
 
 
@@ -500,7 +370,7 @@ public class RaidsApp implements Application {
             debug(msg.toString());
             HeartbeatMessage thump = (HeartbeatMessage) msg;
             NodeHandle thumper = thump.getHandle();
-            setHeartbeatTimerForHandle(thumper);
+            m_heartHandler.receivedHeartbeatFrom(thumper);
             m_reporter.log(thumper.getId().toStringFull(),
             		m_node.getId().toStringFull(),
             		EveType.MSG, "Heartbeat");
@@ -508,12 +378,10 @@ public class RaidsApp implements Application {
 
         // Self Reminder Message - Send Heartbeat Thumps
         else if ( msg instanceof SelfReminder ) {
-        	synchronized (m_sendingThumpsTo) {
-		    	for (NodeHandle nh : m_sendingThumpsTo) {
-		    		debug("sending heartbeat to " + nh.getId().toStringFull());
-		    		routeMessageDirect(new HeartbeatMessage(m_node.getLocalNodeHandle()), nh);
-				}
-        	}
+	    	for (NodeHandle nh : m_heartHandler.getSendingList()) {
+	    		debug("sending heartbeat to " + nh.getId().toStringFull());
+	    		routeMessageDirect(new HeartbeatMessage(m_node.getLocalNodeHandle()), nh);
+			}
         }
 
         // MasterListMessage message
@@ -620,10 +488,7 @@ public class RaidsApp implements Application {
     	m_selfTask.cancel();
 
         // Timers
-        for (Timer x : m_hearts.values()) {
-            x.purge();
-            x.cancel();
-        }
+        m_heartHandler.cancelAll();
 
         // Node
         ((PastryNode)m_node).destroy();
@@ -663,10 +528,8 @@ public class RaidsApp implements Application {
      */
     public void cpr(RaidsApp other) {
     	NodeHandle nh = other.getNode().getLocalNodeHandle();
-        setHeartbeatTimerForHandle( nh );
-        synchronized (m_sendingThumpsTo) {
-        	m_sendingThumpsTo.add(nh);
-        }
+    	m_heartHandler.sendHeartbeatsTo(nh);
+    	m_heartHandler.listenForHearbeatsFrom(nh);
     }
 
     /**
