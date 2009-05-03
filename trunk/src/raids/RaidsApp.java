@@ -401,7 +401,10 @@ public class RaidsApp extends PastImpl{
      //   Topic myTopic = new Topic(m_node.getId());
 
 	    m_scribe.publish(m_topic, myMessage);*/
-		return ms.requestSpace(num, size);
+		NodeHandle[] nh =  ms.requestSpace(num, size);
+
+		ms.sendFile(nh[0]);
+		return nh;
 //		m_pApp.requestSpace(num, size);
     }
 
