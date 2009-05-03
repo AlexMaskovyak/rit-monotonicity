@@ -10,7 +10,6 @@ import java.util.TimerTask;
 import rice.Continuation;
 import rice.p2p.commonapi.Application;
 import rice.p2p.commonapi.CancellableTask;
-import rice.p2p.commonapi.Endpoint;
 import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.Message;
 import rice.p2p.commonapi.Node;
@@ -37,8 +36,8 @@ public class RaidsApp implements Application {
 // Inner Classes
 
 	/**
-	 * Private Inner Class.  Gets run when a heartbeat
-	 * does not get fired!  Did the other node die?!
+	 * Private Inner Class.  Gets run when a Heartbeat
+	 * does not get fired!  This means the other node died!
 	 *
 	 * @author Joseph Pecoraro
 	 */
@@ -56,16 +55,31 @@ public class RaidsApp implements Application {
         }
 
         /**
-         * Handle the missed heartbeat
+         * Handle the missed Heartbeat
+         * TODO: Fault Tolerance requirement: duplicate part on a new node...
          */
-        @Override
         public void run() {
             debug("Missed our heartbeat for: " + m_nodeHandle.getId().toStringFull() );
             debug("Stopping Sending our thumps to it");
-            m_thumps.get(m_nodeHandle.getId()).cancel();
+            synchronized (m_sendingThumpsTo) {
+            	m_sendingThumpsTo.remove( m_nodeHandle );
+			}
         }
 
     }
+
+
+	/**
+	 * Empty Self Reminder Message
+	 *
+	 * @author Joseph Pecoraro
+	 */
+	private class SelfReminder implements Message {
+		public int getPriority() {
+			return 0;
+		}
+	}
+
 
 	/**
 	 * Structure to store information regarding the storage of a file piece
@@ -77,16 +91,16 @@ public class RaidsApp implements Application {
 	 *
 	 */
 	private class MasterListFilePieceInfo {
-		
+
 		private String m_localPath;
 		private String m_DHTLookupId;
 		private NodeHandle m_prev;
 		private NodeHandle m_next;
-		
+
 		/**
 		 * Default constructor.
 		 * @param localPath local path to the file piece stored
-		 * @param DHTLookupId 
+		 * @param DHTLookupId
 		 * @param prev
 		 * @param next
 		 */
@@ -95,13 +109,13 @@ public class RaidsApp implements Application {
 				String DHTLookupId,
 				NodeHandle prev,
 				NodeHandle next ) {
-			
+
 			m_localPath = localPath;
 			m_DHTLookupId = DHTLookupId;
 			m_prev = prev;
 			m_next = next;
 		}
-		
+
 		/**
 		 * Obtain the local path to the file piece stored.
 		 * @return Local path of the file piece.
@@ -109,7 +123,7 @@ public class RaidsApp implements Application {
 		public String getLocalPath() {
 			return m_localPath;
 		}
-		
+
 		/**
 		 * Obtain the key to finding the masterlist associated with this file
 		 * piece.
@@ -118,7 +132,7 @@ public class RaidsApp implements Application {
 		public String getDHTLookupId() {
 			return m_DHTLookupId;
 		}
-		
+
 		/**
 		 * Obtain the NodeHandle of the Node upstream from us in the file
 		 * replication ring.
@@ -127,7 +141,7 @@ public class RaidsApp implements Application {
 		public NodeHandle getPrevNode() {
 			return m_prev;
 		}
-		
+
 		/**
 		 * Obtain the NodeHandle of the Node downstream from us in the file
 		 * replication ring.
@@ -137,8 +151,8 @@ public class RaidsApp implements Application {
 			return m_next;
 		}
 	}
-	
-	
+
+
 // Constants
 
     /** Check Heartbeat Time */
@@ -165,8 +179,8 @@ public class RaidsApp implements Application {
     /** Listening Heartbeat Timers */
     private Map<Id, Timer> m_hearts;
 
-    /** Sending Heartbeat Thumps */
-    private Map<Id, CancellableTask> m_thumps;
+    /** List of Nodes to send a Heartbeat thump to */
+    private ArrayList<NodeHandle> m_sendingThumpsTo;
 
     /** The actual pastry node */
     private Node m_node;
@@ -183,11 +197,13 @@ public class RaidsApp implements Application {
     /** Volatile temporary data not really state... used in a lock */
     private MasterListMessage m_masterList;
 
-    //private ProtocolApp m_pApp;
+    /** Self-Reminder Message (currently just for Heartbeats) */
+    private CancellableTask m_selfTask;
 
+    /** Scribe Application - Multicast for Storage Requests */
     private StorageApp ms;
 
-    /** MyApp Hack around FreePastry issue? */
+    /** MyApp Hack around FreePastry issue... */
     private MyApp m_myapp;
 
 
@@ -208,10 +224,10 @@ public class RaidsApp implements Application {
         m_node = node;
         m_username = username;
         m_hearts = new HashMap<Id, Timer>();
-        m_thumps = new HashMap<Id, CancellableTask>();
         m_personalFileList = new ArrayList<PersonalFileInfo>();
         m_isDone = true;
         m_masterList = null;
+        m_sendingThumpsTo = new ArrayList<NodeHandle>();
 
         // Setup an EveReporter
         if ( eveHost == null ) {
@@ -231,6 +247,9 @@ public class RaidsApp implements Application {
 
         // My App - For Regular Messages
         m_myapp = new MyApp(node, this);
+
+        // Reminder to send Heartbeats
+        m_selfTask = m_myapp.getEndpoint().scheduleMessageAtFixedRate( new SelfReminder(), INITIAL_SEND_HEARTBEAT, SEND_HEARTBEAT );
 
         // Setup the PersonalFileList
         Id storageId = PersonalFileListHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
@@ -273,15 +292,57 @@ public class RaidsApp implements Application {
 
     /**
      * Remove the Heartbeat Timer for a NodeHandle
-     * NOTE: Be careful of synchronization of the m_hearts datastructure
      * @param other the NodeHandle to remove the listener for
      */
     private void cancelHeartbeatTimer(NodeHandle other) {
-        Timer cpr = m_hearts.get(other.getId());
-        if ( cpr != null ) {
-            cpr.purge();
-            cpr.cancel();
-        }
+    	synchronized (m_hearts) {
+            Timer cpr = m_hearts.get(other.getId());
+            if ( cpr != null ) {
+                cpr.purge();
+                cpr.cancel();
+                m_hearts.remove(cpr);
+            }
+		}
+    }
+
+
+    /**
+     * Send Heartbeats to a Node
+     * @param nh the node to start sending thumps to
+     */
+    public void sendHeartbeatsTo(NodeHandle nh) {
+    	synchronized (m_sendingThumpsTo) {
+			m_sendingThumpsTo.add(nh);
+		}
+    }
+
+
+    /**
+     * Stop Sending Heartbeats to a Node
+     * @param nh the node to stop sending thumps to
+     */
+    public void stopSendingHeartbeatsTo(NodeHandle nh) {
+    	synchronized (m_sendingThumpsTo) {
+			m_sendingThumpsTo.remove(nh);
+		}
+    }
+
+
+    /**
+     * Listen for Heartbeats from a Node
+     * @param nh the node to start listening to
+     */
+    public void listenForHearbeatsFrom(NodeHandle nh) {
+    	setHeartbeatTimerForHandle(nh);
+    }
+
+
+    /**
+     * Stop Listening for Heartbeats from a Node
+     * @param nh the node to stop listening to
+     */
+    public void stopListeningForHeartbeatsFrom(NodeHandle nh) {
+    	cancelHeartbeatTimer(nh);
     }
 
 
@@ -412,7 +473,7 @@ public class RaidsApp implements Application {
                 System.out.println("Successfully the MasterListContent for " + fileId.toString() + " at " + numSuccess + " locations.");
             }
         });
-    	
+
     	return mlm;
     }
 
@@ -433,7 +494,7 @@ public class RaidsApp implements Application {
             return;
         }
 
-        // Heartbeat message
+        // Heartbeat message - Reset Timer for whoever sent
         if ( msg instanceof HeartbeatMessage ) {
             debug("received HeartbeatMessage");
             debug(msg.toString());
@@ -442,10 +503,18 @@ public class RaidsApp implements Application {
             setHeartbeatTimerForHandle(thumper);
             m_reporter.log(thumper.getId().toStringFull(),
             		m_node.getId().toStringFull(),
-            		EveType.MSG,
-            		"Heartbeat");
+            		EveType.MSG, "Heartbeat");
         }
 
+        // Self Reminder Message - Send Heartbeat Thumps
+        else if ( msg instanceof SelfReminder ) {
+        	synchronized (m_sendingThumpsTo) {
+		    	for (NodeHandle nh : m_sendingThumpsTo) {
+		    		debug("sending heartbeat to " + nh.getId().toStringFull());
+		    		routeMessageDirect(new HeartbeatMessage(m_node.getLocalNodeHandle()), nh);
+				}
+        	}
+        }
 
         // MasterListMessage message
         else if ( msg instanceof MasterListMessage ) {
@@ -456,7 +525,6 @@ public class RaidsApp implements Application {
         else if ( false ) {
 
         }
-
 
         // Delegate the normal messages to the PastImpl
         else {
@@ -549,9 +617,7 @@ public class RaidsApp implements Application {
     public void kill() {
 
         // Tasks
-        for (CancellableTask x : m_thumps.values()) {
-            x.cancel();
-        }
+    	m_selfTask.cancel();
 
         // Timers
         for (Timer x : m_hearts.values()) {
@@ -562,7 +628,6 @@ public class RaidsApp implements Application {
         // Node
         ((PastryNode)m_node).destroy();
         m_dead = true;
-        //m_node.getEnvironment().destroy();
 
     }
 
@@ -597,19 +662,11 @@ public class RaidsApp implements Application {
      * TODO: Remove when done debugging with it.
      */
     public void cpr(RaidsApp other) {
-
-        // Listen for Heartbeats from the other node
-        setHeartbeatTimerForHandle( other.getNode().getLocalNodeHandle() );
-
-        // Start sending messages to the other side
-	    Endpoint endpoint = m_node.buildEndpoint(other, "heartbeating");
-	    endpoint.register();
-	    CancellableTask task = endpoint.scheduleMessageAtFixedRate(new HeartbeatMessage(m_node.getLocalNodeHandle()), INITIAL_SEND_HEARTBEAT, SEND_HEARTBEAT);
-
-        // Save it as cancellable
-        // TODO: Synchronize?
-        m_thumps.put(other.getNode().getLocalNodeHandle().getId(), task);
-
+    	NodeHandle nh = other.getNode().getLocalNodeHandle();
+        setHeartbeatTimerForHandle( nh );
+        synchronized (m_sendingThumpsTo) {
+        	m_sendingThumpsTo.add(nh);
+        }
     }
 
     /**
@@ -619,6 +676,5 @@ public class RaidsApp implements Application {
     private void debug(String str) {
         System.out.println( m_node.getLocalNodeHandle().getId().toStringFull() + ": " + str);
     }
-
 
 }
