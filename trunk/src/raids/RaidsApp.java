@@ -27,6 +27,8 @@ import eve.EveType;
  * Our Application.
  * Rides on top of a Past Implementation
  *
+ * @author Kevin Cheek
+ * @author Alex Maskovyak
  * @author Joseph Pecoraro
  */
 public class RaidsApp implements Application {
@@ -65,6 +67,78 @@ public class RaidsApp implements Application {
 
     }
 
+	/**
+	 * Structure to store information regarding the storage of a file piece
+	 * both locally and within other Masters in the ring responsible for this
+	 * piece.
+	 * @author Kevin Cheek
+	 * @author Alex Maskovyak
+	 * @author Joe Pecoraro
+	 *
+	 */
+	private class MasterListFilePieceInfo {
+		
+		private String m_localPath;
+		private String m_DHTLookupId;
+		private NodeHandle m_prev;
+		private NodeHandle m_next;
+		
+		/**
+		 * Default constructor.
+		 * @param localPath local path to the file piece stored
+		 * @param DHTLookupId 
+		 * @param prev
+		 * @param next
+		 */
+		public MasterListFilePieceInfo(
+				String localPath,
+				String DHTLookupId,
+				NodeHandle prev,
+				NodeHandle next ) {
+			
+			m_localPath = localPath;
+			m_DHTLookupId = DHTLookupId;
+			m_prev = prev;
+			m_next = next;
+		}
+		
+		/**
+		 * Obtain the local path to the file piece stored.
+		 * @return Local path of the file piece.
+		 */
+		public String getLocalPath() {
+			return m_localPath;
+		}
+		
+		/**
+		 * Obtain the key to finding the masterlist associated with this file
+		 * piece.
+		 * @return Key to the DHT.
+		 */
+		public String getDHTLookupId() {
+			return m_DHTLookupId;
+		}
+		
+		/**
+		 * Obtain the NodeHandle of the Node upstream from us in the file
+		 * replication ring.
+		 * @return NodeHandle of the previous node.
+		 */
+		public NodeHandle getPrevNode() {
+			return m_prev;
+		}
+		
+		/**
+		 * Obtain the NodeHandle of the Node downstream from us in the file
+		 * replication ring.
+		 * @return NodeHandle of the next node.
+		 */
+		public NodeHandle getNextNode() {
+			return m_next;
+		}
+	}
+	
+	
 // Constants
 
     /** Check Heartbeat Time */
