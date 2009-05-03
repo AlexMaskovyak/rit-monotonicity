@@ -207,7 +207,9 @@ public class ClientTerminal extends Thread {
 	 */
 	private void routeDirectMessage(Message msg, NodeHandle nh) {
 		System.out.println(m_app.toString() +" sending direct to " + nh.toString());
+		m_app.routeMessageDirect(msg, nh);
 
+		/*
 		// TODO: How can we change this so it will work across a network?
 		// We need the other "Applications" Endpoint.  I have no idea.
 		for (RaidsApp a : m_apps) {
@@ -215,9 +217,8 @@ public class ClientTerminal extends Thread {
 				a.getRaidsEndpoint().route(null, msg, nh);
 				return;
 			}
-		}
+		}*/
 
-		System.err.println("No Such NodeHandle");
 	}
 
 
