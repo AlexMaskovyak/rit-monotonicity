@@ -1,8 +1,9 @@
-package raids;
+package examples;
 
 import java.util.Arrays;
 import java.util.List;
 
+import raids.PastContentList;
 import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.NodeHandle;
 
@@ -19,7 +20,7 @@ public class MasterListContent extends PastContentList<NodeHandle> {
 	 * Default Constructor
 	 * Creates an Empty list of Masters.
 	 * @param myId id of the content
-	 */
+	 
 	public MasterListContent(Id myId) {
 		super( myId );
 	}
