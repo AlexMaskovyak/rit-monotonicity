@@ -8,6 +8,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import rice.Continuation;
+import rice.p2p.commonapi.Application;
 import rice.p2p.commonapi.CancellableTask;
 import rice.p2p.commonapi.Endpoint;
 import rice.p2p.commonapi.Id;
@@ -28,7 +29,7 @@ import eve.EveType;
  *
  * @author Joseph Pecoraro
  */
-public class RaidsApp extends PastImpl{
+public class RaidsApp implements Application {
 
 
 // Inner Classes
@@ -78,6 +79,9 @@ public class RaidsApp extends PastImpl{
 
 // Fields
 
+    /** PAST */
+    private PastImpl m_past;
+
     /** EveReporter */
     private EveReporter m_reporter;
 
@@ -109,7 +113,8 @@ public class RaidsApp extends PastImpl{
 
     private StorageApp ms;
 
-    private Endpoint m_raidsEndpoint;
+    /** MyApp Hack around FreePastry issue? */
+    private MyApp m_myapp;
 
 
     /**
@@ -124,9 +129,6 @@ public class RaidsApp extends PastImpl{
      */
     public RaidsApp(Node node, StorageManager manager, int replicas, String instance, String username, String eveHost, int evePort) {
 
-        // PastImpl
-        super(node, manager, replicas, instance);
-
         // Set States
         m_dead = false;
         m_node = node;
@@ -136,9 +138,6 @@ public class RaidsApp extends PastImpl{
         m_personalFileList = new ArrayList<PersonalFileInfo>();
         m_isDone = true;
         m_masterList = null;
-        m_raidsEndpoint = m_node.buildEndpoint(this, "x");
-        m_raidsEndpoint.register();
-
 
         // Setup an EveReporter
         if ( eveHost == null ) {
@@ -148,14 +147,20 @@ public class RaidsApp extends PastImpl{
         }
 
         // Register Name:Id pair with Eve
-        m_reporter.log(username, null, EveType.REGISTER, this.getLocalNodeHandle().getId().toStringFull());
+        m_reporter.log(username, null, EveType.REGISTER, m_node.getLocalNodeHandle().getId().toStringFull());
 
-        // Create the StorageApp for Multicasts
+        // Past Application - For a DHT
+    	m_past = new PastImpl(node, manager, replicas, instance);
+
+        // Script Application - For Multicasts
         ms = new StorageApp( node, m_reporter );
+
+        // My App - For Regular Messages
+        m_myapp = new MyApp(node, this);
 
         // Setup the PersonalFileList
         Id storageId = PersonalFileListHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
-        this.lookup(storageId, new Continuation<PastContent, Exception>() {
+        m_past.lookup(storageId, new Continuation<PastContent, Exception>() {
             public void receiveException(Exception e) { e.printStackTrace(); }
             public void receiveResult(PastContent result) {
                 synchronized (m_personalFileList) {
@@ -213,7 +218,7 @@ public class RaidsApp extends PastImpl{
      */
     public void lookupPersonalFileList() {
         Id storageId = PersonalFileListHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
-        this.lookup(storageId, new Continuation<PastContent, Exception>() {
+        m_past.lookup(storageId, new Continuation<PastContent, Exception>() {
             public void receiveException(Exception e) {}
             public void receiveResult(PastContent result) {
                 synchronized (m_personalFileList) {
@@ -236,7 +241,7 @@ public class RaidsApp extends PastImpl{
         m_personalFileList = list;
         Id storageId = PersonalFileListHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
         PersonalFileListContent pfl = new PersonalFileListContent(storageId, m_personalFileList);
-        insert(pfl, new Continuation<Boolean[], Exception>() {
+        m_past.insert(pfl, new Continuation<Boolean[], Exception>() {
             public void receiveException(Exception e) { e.printStackTrace(); }
             public void receiveResult(Boolean[] res) {
                 Boolean[] results = ((Boolean[]) res);
@@ -276,7 +281,7 @@ public class RaidsApp extends PastImpl{
     	m_masterList = null;
 
     	// Lookup
-        this.lookup(fileId, new Continuation<PastContent, Exception>() {
+    	m_past.lookup(fileId, new Continuation<PastContent, Exception>() {
             public void receiveException(Exception e) {}
             public void receiveResult(PastContent result) {
                 m_masterList = (MasterListContent) result;
@@ -319,7 +324,7 @@ public class RaidsApp extends PastImpl{
      */
     public void updateMasterList(final Id fileId, List<NodeHandle> list) {
     	MasterListContent mlc = new MasterListContent(fileId, list);
-        insert(mlc, new Continuation<Boolean[], Exception>() {
+    	m_past.insert(mlc, new Continuation<Boolean[], Exception>() {
             public void receiveException(Exception e) { e.printStackTrace(); }
             public void receiveResult(Boolean[] res) {
                 Boolean[] results = ((Boolean[]) res);
@@ -380,7 +385,7 @@ public class RaidsApp extends PastImpl{
 
         // Delegate the normal messages to the PastImpl
         else {
-            super.deliver(id, msg);
+            m_past.deliver(id, msg);
         }
 
     }
@@ -420,7 +425,7 @@ public class RaidsApp extends PastImpl{
 
         // Delegate the normal details to the PastImpl
     	try {
-    		return super.forward(msg);
+    		return m_past.forward(msg);
     	} catch (Exception e) {}
     	return true;
     }
@@ -433,12 +438,22 @@ public class RaidsApp extends PastImpl{
         // debug("inside update");
 
         // Delegate the normal details to the PastImpl
-        super.update(handle, joined);
+    	m_past.update(handle, joined);
 
     }
 
 
 // Public Methods
+
+    /**
+     * Send a Message through MyApp
+     * NOTE: This is a Hack around a FreePastry issue
+     * @param msg the message to send
+     * @param nh the NodeHandle to send this message directly to
+     */
+    public void routeMessageDirect(Message msg, NodeHandle nh) {
+    	m_myapp.getEndpoint().route(null, msg, nh);
+    }
 
     /**
      * Status information on this node.
@@ -499,10 +514,6 @@ public class RaidsApp extends PastImpl{
         m_personalFileList = personalFileList;
     }
 
-	public Endpoint getRaidsEndpoint() {
-		return m_raidsEndpoint;
-	}
-
 
 // Debug
 
@@ -513,7 +524,7 @@ public class RaidsApp extends PastImpl{
     public void cpr(RaidsApp other) {
 
         // Listen for Heartbeats from the other node
-        setHeartbeatTimerForHandle( other.getLocalNodeHandle() );
+        setHeartbeatTimerForHandle( other.getNode().getLocalNodeHandle() );
 
         // Start sending messages to the other side
 	    Endpoint endpoint = m_node.buildEndpoint(other, "heartbeating");
@@ -522,7 +533,7 @@ public class RaidsApp extends PastImpl{
 
         // Save it as cancellable
         // TODO: Synchronize?
-        m_thumps.put(other.getLocalNodeHandle().getId(), task);
+        m_thumps.put(other.getNode().getLocalNodeHandle().getId(), task);
 
     }
 
@@ -531,7 +542,7 @@ public class RaidsApp extends PastImpl{
      * @param str the string to print
      */
     private void debug(String str) {
-        System.out.println( getLocalNodeHandle().getId().toStringFull() + ": " + str);
+        System.out.println( m_node.getLocalNodeHandle().getId().toStringFull() + ": " + str);
     }
 
 
