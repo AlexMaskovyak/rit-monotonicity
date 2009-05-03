@@ -6,14 +6,10 @@ import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.Message;
 import rice.p2p.commonapi.NodeHandle;
 import rice.p2p.past.ContentHashPastContent;
-import rice.p2p.past.Past;
-import rice.p2p.past.PastContent;
-import rice.p2p.past.PastContentHandle;
-import rice.p2p.past.PastException;
 
 /**
- * Sent when a file upload points have been determined. Contains the node list 
- * for each part of the original file, and a lookup key for the DHT to find the 
+ * Sent when a file upload points have been determined. Contains the node list
+ * for each part of the original file, and a lookup key for the DHT to find the
  * current master list.
  *
  * @author Kevin Cheek
@@ -23,7 +19,7 @@ import rice.p2p.past.PastException;
 public class MasterListMessage extends ContentHashPastContent implements Message {
 
     /**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 3588250315167081680L;
 
