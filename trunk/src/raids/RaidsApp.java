@@ -366,11 +366,6 @@ public class RaidsApp extends PastImpl{
             		"Heartbeat");
         }
 
-        // DumbMessage
-        // TODO: REmove, debug
-        else if ( msg instanceof DumbMessage ) {
-        	debug("x");
-        }
 
         // MasterListMessage message
         else if ( msg instanceof MasterListMessage ) {
