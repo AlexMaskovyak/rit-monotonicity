@@ -6,7 +6,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Vector;
 
-import raids.MasterListContent;
+import raids.MasterListMessage;
 import raids.PersonalFileInfo;
 import raids.PersonalFileListContent;
 import raids.PersonalFileListHelper;

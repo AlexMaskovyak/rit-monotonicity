@@ -285,27 +285,35 @@ public class ClientTerminal extends Thread {
 			NodeHandle[] storageNodes = m_app.requestSpace( chunks, cfi.getMaxChunkSize() );
 
 			// make the first 3 masters (arbitrary)
-			NodeHandle[] masters = null;
-			if ( storageNodes.length < 3 ) {
+			List<NodeHandle>[] masters = new ArrayList[ chunks ];
+			
+			int[] blah = new int[5];
+			for( int i = 0; i < chunks; ++i ) {
+				masters[ i ] = new ArrayList<NodeHandle>();
+				masters[ i ].add( storageNodes[ i ] );
+			}
+			
+/*			if ( storageNodes.length < 3 ) {
+				
 				System.arraycopy(storageNodes, 0, masters, 0, storageNodes.length);
 			} else {
 				masters = new NodeHandle[] { storageNodes[0], storageNodes[1], storageNodes[2] };
 			}
-
+*/
 			// Debug for Demonstration
 			System.out.println();
 			System.out.println("Nodes That Will Accept Storage: ");
 			for (NodeHandle nh : storageNodes) { System.out.println(nh); }
 			System.out.println();
 			System.out.println("Master Nodes: ");
-			for (NodeHandle nh : masters) { System.out.println(nh); }
+			for (List<NodeHandle> nh : masters) { System.out.println(nh.get( 0 )); }
 			System.out.println();
 
 			// Master List information
 			Id fileId = PersonalFileListHelper.masterListIdForFilename(fileName, m_env);
 
 			// Upload the master list into the DHT
-			m_app.updateMasterList(fileName, Arrays.asList(masters) );
+			MasterListMessage mlm = m_app.updateMasterList(fileName, masters );
 
 			// Update the PersonalFileList in the DHT
 			List<PersonalFileInfo> list = m_app.getPersonalFileList();
@@ -313,17 +321,17 @@ public class ClientTerminal extends Thread {
 			m_app.updatePersonalFileList(list);
 
 			// Create the lists to be sent out in the MasterListMessage
-			List<NodeHandle> masterList = Arrays.asList(masters);
+/*			List<NodeHandle> masterList = Arrays.asList(masters);
 			List<NodeHandle>[] parts = new List[chunks];
 			for (int i = 0; i < chunks; i++) {
 				List l = new ArrayList<NodeHandle>();
 				l.add( storageNodes[i] );
 				parts[i] = l;
 			}
-
+*/
 			// Create the MasterListMessage and send it to everyone who needs it
-			MasterListMessage mlm = new MasterListMessage(masterList, parts, fileId);
-			System.out.println(mlm);
+//			MasterListMessage mlm = new MasterListMessage(fileId, parts);
+//			System.out.println(mlm);
 			for (NodeHandle nh : storageNodes) {
 				routeDirectMessage(mlm, nh);
 			}

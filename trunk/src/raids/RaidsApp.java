@@ -181,7 +181,7 @@ public class RaidsApp implements Application {
     private boolean m_isDone;
 
     /** Volatile temporary data not really state... used in a lock */
-    private MasterListContent m_masterList;
+    private MasterListMessage m_masterList;
 
     //private ProtocolApp m_pApp;
 
@@ -339,7 +339,7 @@ public class RaidsApp implements Application {
      * @param filename the filename for which you want the Master List
      * @return the Master List as it was stored in the DHT
      */
-    public MasterListContent lookupMasterList(String filename) {
+    public MasterListMessage lookupMasterList(String filename) {
     	Id fileId = PersonalFileListHelper.masterListIdForFilename(filename, m_node.getEnvironment());
     	return lookupMasterList(fileId);
     }
@@ -348,7 +348,7 @@ public class RaidsApp implements Application {
      * Grab the latest Master List For the Given Id (synchronous)
      * @param fileId the PastryId for the Filename
      */
-    public MasterListContent lookupMasterList(Id fileId) {
+    public MasterListMessage lookupMasterList(Id fileId) {
 
     	// Locked Variables
     	m_isDone = false;
@@ -358,7 +358,7 @@ public class RaidsApp implements Application {
     	m_past.lookup(fileId, new Continuation<PastContent, Exception>() {
             public void receiveException(Exception e) {}
             public void receiveResult(PastContent result) {
-                m_masterList = (MasterListContent) result;
+                m_masterList = (MasterListMessage) result;
                 m_isDone = true; // release the lock
             }
         });
@@ -385,9 +385,9 @@ public class RaidsApp implements Application {
      * @param filename the filename the Master List is for
      * @param list the new Master List
      */
-    public void updateMasterList(String filename, List<NodeHandle> list) {
+    public MasterListMessage updateMasterList(String filename, List<NodeHandle>[] list) {
     	Id fileId = PersonalFileListHelper.masterListIdForFilename(filename, m_node.getEnvironment());
-    	updateMasterList(fileId, list);
+    	return updateMasterList(fileId, list);
     }
 
 
@@ -396,9 +396,9 @@ public class RaidsApp implements Application {
      * @param fileId id of the Pastry Filename
      * @param list the new Master List
      */
-    public void updateMasterList(final Id fileId, List<NodeHandle> list) {
-    	MasterListContent mlc = new MasterListContent(fileId, list);
-    	m_past.insert(mlc, new Continuation<Boolean[], Exception>() {
+    public MasterListMessage updateMasterList(final Id fileId, List<NodeHandle>[] list) {
+    	MasterListMessage mlm = new MasterListMessage(fileId, list);
+    	m_past.insert(mlm, new Continuation<Boolean[], Exception>() {
             public void receiveException(Exception e) { e.printStackTrace(); }
             public void receiveResult(Boolean[] res) {
                 Boolean[] results = ((Boolean[]) res);
@@ -412,7 +412,8 @@ public class RaidsApp implements Application {
                 System.out.println("Successfully the MasterListContent for " + fileId.toString() + " at " + numSuccess + " locations.");
             }
         });
-
+    	
+    	return mlm;
     }
 
 
