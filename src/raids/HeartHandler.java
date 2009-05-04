@@ -55,10 +55,10 @@ public class HeartHandler {
 //	Constants
 
 	/** Check Heartbeat Time */
-	public static final int CHECK_HEARTBEAT = 5000; /* 5 seconds */
+	public static final int CHECK_HEARTBEAT = 20000; /* 20 seconds */
 
 	/** Send Heartbeat Thump Time */
-	public static final int SEND_HEARTBEAT = 1000; /* 1 second */
+	public static final int SEND_HEARTBEAT = 5000; /* 5 seconds */
 
 	/** Initial Send Heartbeat Thump Time */
 	public static final int INITIAL_SEND_HEARTBEAT = 3000; /* 3 seconds */
@@ -170,6 +170,7 @@ public class HeartHandler {
 	private void debug(Object obj) {
 		System.out.println( m_app.getNode().getId().toStringFull() + ": " + obj.toString());
 	}
+
 
 	/**
 	 * Reset the Heartbeat Timer for a NodeHandle
