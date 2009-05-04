@@ -42,4 +42,15 @@ public class PersonalFileInfo implements Serializable {
 		return super.toString() + ":" + m_name;
 	}
 
+	/**
+	 * Equality by checking filenames
+	 * @return true if both objects had the same filename
+	 */
+	public boolean equals(Object other) {
+		if ( other instanceof PersonalFileInfo ) {
+			return m_name.equals( ((PersonalFileInfo)other).getName() );
+		}
+		return false;
+	}
+
 }
