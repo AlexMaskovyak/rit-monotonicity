@@ -109,7 +109,6 @@ public class StorageApp implements ScribeClient, Application {
 	 * @return		An array of NodeHandles for the nodes that responded or null if it times out
 	 */
 	public NodeHandle[] requestSpace(int num, long size) {
-		System.out.println("requestSpace");
 		ScribeContent myMessage = new StorageRequest(m_endpoint.getLocalNodeHandle(), size);
 		m_isDone = false;
 		m_response = num;
@@ -247,8 +246,7 @@ public class StorageApp implements ScribeClient, Application {
 						((StorageRequest) message).getResponse().getId().toStringFull(),
 						m_node.getId().toStringFull(), EveType.MSG,
 						"Storage Response");
-				System.out.println("Got Storage Response: "
-						+ ((StorageRequest) message).getFrom().getId());
+				//System.out.println("Got Storage Response: " + ((StorageRequest) message).getFrom().getId());
 			}else{
 				m_isDone = true;
 			}
@@ -266,7 +264,7 @@ public class StorageApp implements ScribeClient, Application {
 	 */
 	public void deliver(Topic topic, ScribeContent content) {
 		if( content instanceof StorageRequest ){
-			System.out.println("Got Storage Request... Sending response");
+			//System.out.println("Got Storage Request... Sending response");
 
 			//TODO: Add check for available storage space
 
