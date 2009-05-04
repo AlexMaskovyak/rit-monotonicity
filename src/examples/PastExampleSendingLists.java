@@ -6,19 +6,25 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Vector;
 
-import raids.MasterListMessage;
+import raids.GeneralIdHelper;
 import raids.PersonalFileInfo;
 import raids.PersonalFileListContent;
-import raids.PersonalFileListHelper;
 import rice.Continuation;
 import rice.environment.Environment;
 import rice.p2p.commonapi.Id;
-import rice.p2p.past.*;
-import rice.pastry.*;
+import rice.p2p.past.Past;
+import rice.p2p.past.PastContent;
+import rice.p2p.past.PastImpl;
+import rice.pastry.NodeIdFactory;
+import rice.pastry.PastryNode;
+import rice.pastry.PastryNodeFactory;
 import rice.pastry.commonapi.PastryIdFactory;
 import rice.pastry.socket.SocketPastryNodeFactory;
 import rice.pastry.standard.RandomNodeIdFactory;
-import rice.persistence.*;
+import rice.persistence.LRUCache;
+import rice.persistence.MemoryStorage;
+import rice.persistence.Storage;
+import rice.persistence.StorageManagerImpl;
 
 public class PastExampleSendingLists {
 
@@ -122,7 +128,7 @@ public class PastExampleSendingLists {
 		Environment env = originatingClient.getEnvironment();
 
 		// FAKE Storage information for that list!
-		Id fakeStorageId = PersonalFileListHelper.personalFileListIdFromNodeId(originatingClient.getLocalNodeHandle().getId(), env);
+		Id fakeStorageId = GeneralIdHelper.personalFileListIdFromNodeId(originatingClient.getLocalNodeHandle().getId(), env);
 
 		// FAKE Personal File List for that user
 		PersonalFileListContent pfl = new PersonalFileListContent(fakeStorageId);

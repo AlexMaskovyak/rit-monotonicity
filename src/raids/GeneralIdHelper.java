@@ -5,7 +5,7 @@ import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.Node;
 import rice.pastry.commonapi.PastryIdFactory;
 
-public class PersonalFileListHelper {
+public class GeneralIdHelper {
 
 	/** Prefix for Personal File List entries in the DHT */
 	private static final String PERSONAL_LIST_PREFIX = "PERSONAL_FILE_LIST";
@@ -17,11 +17,12 @@ public class PersonalFileListHelper {
 	/**
 	 * Generate the Master List PastryId (the key for the DHT) for a given file name
 	 * @param filename the filename
+	 * @param username the username is prepended to the file to make it unique per user
 	 * @param env the common environment
 	 */
-	public static Id masterListIdForFilename(String filename, Environment env) {
+	public static Id masterListIdForFilename(String filename, String username, Environment env) {
 		PastryIdFactory localFactory = new PastryIdFactory(env);
-		String key = MASTER_LIST_PREFIX + filename;
+		String key = MASTER_LIST_PREFIX + username + filename;
 		return localFactory.buildId(key);
 	}
 
