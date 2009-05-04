@@ -18,9 +18,7 @@ import rice.p2p.past.ContentHashPastContent;
  */
 public class MasterListMessage extends ContentHashPastContent implements Message {
 
-    /**
-	 *
-	 */
+    /** Serial ID */
 	private static final long serialVersionUID = 3588250315167081680L;
 
 	/** Parts Map */

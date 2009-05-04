@@ -1,7 +1,9 @@
 package raids;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import rice.Continuation;
 import rice.p2p.commonapi.Application;
@@ -55,7 +57,7 @@ public class RaidsApp implements Application {
 	private class MasterListFilePieceInfo {
 
 		private String m_localPath;
-		private String m_DHTLookupId;
+		private Id m_DHTLookupId;
 		private NodeHandle m_prev;
 		private NodeHandle m_next;
 
@@ -68,7 +70,7 @@ public class RaidsApp implements Application {
 		 */
 		public MasterListFilePieceInfo(
 				String localPath,
-				String DHTLookupId,
+				Id DHTLookupId,
 				NodeHandle prev,
 				NodeHandle next ) {
 
@@ -91,7 +93,7 @@ public class RaidsApp implements Application {
 		 * piece.
 		 * @return Key to the DHT.
 		 */
-		public String getDHTLookupId() {
+		public Id getDHTLookupId() {
 			return m_DHTLookupId;
 		}
 
@@ -153,6 +155,9 @@ public class RaidsApp implements Application {
     /** MyApp Hack around FreePastry issue... */
     private MyApp m_myapp;
 
+    /** Map of Files stored on this Node */
+    private Map<Id, MasterListFilePieceInfo> m_inventory;
+
 
     /**
      * Basic Constructor that rides on top of the PastImpl Constructor
@@ -174,6 +179,7 @@ public class RaidsApp implements Application {
         m_isDone = true;
         m_masterList = null;
         m_heartHandler = new HeartHandler(this);
+        m_inventory = new HashMap<Id, MasterListFilePieceInfo>();
 
         // Setup an EveReporter
         if ( eveHost == null ) {
@@ -340,7 +346,7 @@ public class RaidsApp implements Application {
                         numSuccess++;
                     }
                 }
-                System.out.println("Successfully the MasterListContent for " + fileId.toString() + " at " + numSuccess + " locations.");
+                System.out.println("Successfully stored the MasterListContent for " + fileId.toString() + " at " + numSuccess + " locations.");
             }
         });
 
@@ -387,6 +393,47 @@ public class RaidsApp implements Application {
         // MasterListMessage message
         else if ( msg instanceof MasterListMessage ) {
         	debug("received MasterListMessage");
+
+        	// States
+        	MasterListMessage mlm = (MasterListMessage) msg;
+        	List<Integer> filesToFetch = new ArrayList<Integer>();
+
+        	// For Each Part List
+        	NodeHandle prev, next;
+        	List[] allParts = mlm.getParts();
+        	for (int i = 0; i < allParts.length; i++) {
+        		List<NodeHandle> parts = allParts[i];
+        		int idx = parts.indexOf( m_node.getLocalNodeHandle() );
+				if ( idx != -1 ) {
+
+					// Setup Prev
+					if ( idx == 0 ) {
+						prev = parts.get(parts.size()-1);
+						filesToFetch.add(Integer.valueOf(i));
+					} else {
+						prev = parts.get(idx-1);
+					}
+
+					// Setup Next
+					if ( idx == parts.size()-1 ) {
+						next = parts.get(0);
+					} else {
+						next = parts.get(idx+1);
+					}
+
+					// Setup MasterListFilePieceInfo
+					m_inventory.put(mlm.getLookupId(), new MasterListFilePieceInfo("", mlm.getLookupId(), prev, next));
+
+					// Setup Heartbeats
+					m_heartHandler.listenForHearbeatsFrom(prev);
+					m_heartHandler.sendHeartbeatsTo(next);
+
+				}
+			}
+
+        	// TODO: Open AppSockets for Parts
+        	// see filesToFetch for part numbers
+
         }
 
         // ...
@@ -521,16 +568,6 @@ public class RaidsApp implements Application {
 
 
 // Debug
-
-    /**
-     * This is a Debug method written by joe
-     * TODO: Remove when done debugging with it.
-     */
-    public void cpr(RaidsApp other) {
-    	NodeHandle nh = other.getNode().getLocalNodeHandle();
-    	m_heartHandler.sendHeartbeatsTo(nh);
-    	m_heartHandler.listenForHearbeatsFrom(nh);
-    }
 
     /**
      * Debug Helper, prints out the node id then the string

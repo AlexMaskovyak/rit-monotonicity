@@ -2,15 +2,12 @@ package raids;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Vector;
 
 import rice.environment.Environment;
-import rice.p2p.commonapi.Id;
-import rice.p2p.commonapi.Message;
 import rice.p2p.commonapi.NodeHandle;
 import chunker.ChunkedFileInfo;
 
@@ -54,10 +51,6 @@ public class ClientTerminal extends Thread {
 
 	/** List Command */
 	private static final String LIST = "list";
-
-	/** Store */
-	private static final String STORE = "store";
-
 
 
 // Fields and Class
@@ -147,30 +140,6 @@ public class ClientTerminal extends Thread {
 					}
 				}
 
-				// TODO: Debug Method for Demonstration, remove once integrated normally
-				else if ( line.startsWith("cpr") ) {
-
-					line = line.replaceFirst("cpr", "").trim();
-
-					// Args
-					String[] args = line.split( " " );
-					int node1 = Integer.parseInt(args[0]);
-					int node2 = Integer.parseInt(args[1]);
-
-					// Link two nodes
-					RaidsApp alpha = m_apps.get(node1);
-					RaidsApp beta  = m_apps.get(node2);
-					alpha.cpr(beta);
-					beta.cpr(alpha);
-
-				}
-
-				// TODO: Debug Method for Demonstration, remove once integrated normally
-				else if ( line.startsWith(STORE) ) {
-					System.out.println("Storing");
-					m_app.requestSpace(5, 20);
-				}
-
 				// Empty Command
 				else if ( line.length() == 0 ) {
 					// Do nothing, the User just had a blank line.
@@ -194,30 +163,6 @@ public class ClientTerminal extends Thread {
 
 		// Total Cleanup
 		m_env.destroy();
-
-	}
-
-// Private Helpers
-
-
-	/**
-	 * Send a Direct Message to a Node identified by the given NodeHandle
-	 * @param msg the Message to send
-	 * @param nh the Node to send the message to
-	 */
-	private void routeDirectMessage(Message msg, NodeHandle nh) {
-		System.out.println(m_app.toString() +" sending direct to " + nh.toString());
-		m_app.routeMessageDirect(msg, nh);
-
-		/*
-		// TODO: How can we change this so it will work across a network?
-		// We need the other "Applications" Endpoint.  I have no idea.
-		for (RaidsApp a : m_apps) {
-			if ( a.getLocalNodeHandle().equals(nh) ) {
-				a.getRaidsEndpoint().route(null, msg, nh);
-				return;
-			}
-		}*/
 
 	}
 
@@ -279,37 +224,35 @@ public class ClientTerminal extends Thread {
 			String fileName = f.getName();
 
 			// chunk the file
-			ChunkedFileInfo cfi = chunker.Chunker.chunk( filePath, fileName, chunks );
+			ChunkedFileInfo cfi = chunker.Chunker.chunk( filePath, fileName, chunks);
 
 			// find nodes with storage
-			NodeHandle[] storageNodes = m_app.requestSpace( chunks, cfi.getMaxChunkSize() );
+			int replicas = 2; // TODO: Make this an optional parameter for upload?
+			NodeHandle[] storageNodes = m_app.requestSpace( chunks*(replicas), cfi.getMaxChunkSize() );
 
-			// make the first 3 masters (arbitrary)
-			List<NodeHandle>[] masters = new ArrayList[ chunks ];
-			
-			for( int i = 0; i < chunks; ++i ) {
-				masters[ i ] = new ArrayList<NodeHandle>();
-				masters[ i ].add( storageNodes[ i ] );
-			}
-			
-/*			if ( storageNodes.length < 3 ) {
-				
-				System.arraycopy(storageNodes, 0, masters, 0, storageNodes.length);
-			} else {
-				masters = new NodeHandle[] { storageNodes[0], storageNodes[1], storageNodes[2] };
-			}
-*/
-			// Debug for Demonstration
+			// Debug
+			System.out.println("Replication Factor: " + replicas);
 			System.out.println();
-			System.out.println("Nodes That Will Accept Storage: ");
+			System.out.println("Nodes that Responded with Storage Space: (" + storageNodes.length + ")");
 			for (NodeHandle nh : storageNodes) { System.out.println(nh); }
 			System.out.println();
-			System.out.println("Master Nodes: ");
-			for (List<NodeHandle> nh : masters) { System.out.println(nh.get( 0 )); }
-			System.out.println();
 
-			// Master List information
-			Id fileId = PersonalFileListHelper.masterListIdForFilename(fileName, m_env);
+			// Split the chunks appropriately among the nodes
+			List<NodeHandle>[] masters = new ArrayList[ chunks ];
+			for (int i=0,k=0; k<(chunks*replicas); i++,k+=replicas) {
+				masters[ i ] = new ArrayList<NodeHandle>();
+				for (int j = 0; j < replicas; ++j) {
+					masters[ i ].add( storageNodes[ k+j ] );
+				}
+			}
+
+			// Debug the lists
+			for (int i = 0; i < masters.length; i++) {
+				List<NodeHandle> list = masters[i];
+				System.out.println("Division Group (" + i + "):");
+				for (NodeHandle nh : list) { System.out.println(nh); }
+				System.out.println();
+			}
 
 			// Upload the master list into the DHT
 			MasterListMessage mlm = m_app.updateMasterList(fileName, masters );
@@ -319,21 +262,13 @@ public class ClientTerminal extends Thread {
 			list.add( new PersonalFileInfo(fileName) );
 			m_app.updatePersonalFileList(list);
 
-			// Create the lists to be sent out in the MasterListMessage
-/*			List<NodeHandle> masterList = Arrays.asList(masters);
-			List<NodeHandle>[] parts = new List[chunks];
-			for (int i = 0; i < chunks; i++) {
-				List l = new ArrayList<NodeHandle>();
-				l.add( storageNodes[i] );
-				parts[i] = l;
-			}
-*/
-			// Create the MasterListMessage and send it to everyone who needs it
-//			MasterListMessage mlm = new MasterListMessage(fileId, parts);
-//			System.out.println(mlm);
+			// Send the MasterListMessage to Everyone
 			for (NodeHandle nh : storageNodes) {
-				routeDirectMessage(mlm, nh);
+				m_app.routeMessageDirect(mlm, nh);
 			}
+
+			// Print Out Message to the User
+			System.out.println("Successfully Submitted the File, it will be uploading in the background.");
 
 		} catch ( Exception e ) {
 			e.printStackTrace();
