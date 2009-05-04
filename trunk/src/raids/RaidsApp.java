@@ -205,7 +205,7 @@ public class RaidsApp implements Application {
         		HeartHandler.INITIAL_SEND_HEARTBEAT, HeartHandler.SEND_HEARTBEAT );
 
         // Setup the PersonalFileList
-        Id storageId = PersonalFileListHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
+        Id storageId = GeneralIdHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
         m_past.lookup(storageId, new Continuation<PastContent, Exception>() {
             public void receiveException(Exception e) { e.printStackTrace(); }
             public void receiveResult(PastContent result) {
@@ -228,7 +228,7 @@ public class RaidsApp implements Application {
      * Grab the latest Personal File List (asynchronous)
      */
     public void lookupPersonalFileList() {
-        Id storageId = PersonalFileListHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
+        Id storageId = GeneralIdHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
         m_past.lookup(storageId, new Continuation<PastContent, Exception>() {
             public void receiveException(Exception e) {}
             public void receiveResult(PastContent result) {
@@ -250,7 +250,7 @@ public class RaidsApp implements Application {
      */
     public void updatePersonalFileList(List<PersonalFileInfo> list) {
         m_personalFileList = list;
-        Id storageId = PersonalFileListHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
+        Id storageId = GeneralIdHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
         PersonalFileListContent pfl = new PersonalFileListContent(storageId, m_personalFileList);
         m_past.insert(pfl, new Continuation<Boolean[], Exception>() {
             public void receiveException(Exception e) { e.printStackTrace(); }
@@ -277,7 +277,7 @@ public class RaidsApp implements Application {
      * @return the Master List as it was stored in the DHT
      */
     public MasterListMessage lookupMasterList(String filename) {
-    	Id fileId = PersonalFileListHelper.masterListIdForFilename(filename, m_node.getEnvironment());
+    	Id fileId = GeneralIdHelper.masterListIdForFilename(filename, m_username, m_node.getEnvironment());
     	return lookupMasterList(fileId);
     }
 
@@ -323,7 +323,7 @@ public class RaidsApp implements Application {
      * @param list the new Master List
      */
     public MasterListMessage updateMasterList(String filename, List<NodeHandle>[] list) {
-    	Id fileId = PersonalFileListHelper.masterListIdForFilename(filename, m_node.getEnvironment());
+    	Id fileId = GeneralIdHelper.masterListIdForFilename(filename, m_username, m_node.getEnvironment());
     	return updateMasterList(fileId, list);
     }
 
