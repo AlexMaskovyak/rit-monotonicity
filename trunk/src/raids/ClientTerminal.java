@@ -43,6 +43,9 @@ public class ClientTerminal extends Thread {
 	/** Upload Command */
 	private static final String UPLOAD = "upload";
 
+	/** Download Command */
+	private static final String DOWNLOAD = "download";
+
 	/** Kill Command */
 	private static final String KILL = "kill";
 
@@ -124,6 +127,12 @@ public class ClientTerminal extends Thread {
 					uploadCommand(line);
 				}
 
+				// Download Command
+				else if ( line.startsWith(DOWNLOAD) ) {
+					line = line.replaceFirst(DOWNLOAD, "").trim();
+					downloadCommand(line);
+				}
+
 				// Help Command
 				else if ( line.startsWith(HELP) ) {
 					helpCommand();
@@ -200,6 +209,54 @@ public class ClientTerminal extends Thread {
 			} catch (Exception e) {
 				System.err.println("Bad kill command.  Usage: kill [<killNum>]");
 			}
+		}
+	}
+
+	/**
+	 * Process a file Download Command
+	 * usage: download <filename>
+	 */
+	private void downloadCommand(String line) {
+		try {
+
+			// Handle bad input (filename with spaces, or empty filename)
+			String[] args = line.split("\\s");
+			if ( args.length != 1 ) {
+				System.err.println("Bad download command. Filename contains a space. Usage: download <filename>");
+				return;
+			} else if ( args[0].length() == 0 ) {
+				System.err.println("Bad download command.  Usage: download <filename>");
+			}
+
+			// The Filename
+			String filename = args[0];
+
+			// Check personal file list to ensure the file has been uploaded before
+			List<PersonalFileInfo> fileList = m_app.getPersonalFileList();
+			if ( !fileList.contains( new PersonalFileInfo(filename) ) ) {
+				System.err.println("This User has never stored a file named (" + filename + ").");
+				return;
+			}
+
+			// Grab the most current Master List for who holds the parts from the DHT
+			MasterListMessage mlm = m_app.lookupMasterList(filename);
+
+			// Debug
+			List<NodeHandle>[] parts = mlm.getParts();
+			System.out.println();
+			for (int i = 0; i < parts.length; i++) {
+				System.out.println("Ask the following nodes for part (" + i + "):");
+				for (NodeHandle nh : parts[i]) { System.out.println(nh); }
+				System.out.println();
+			}
+
+			// Choose who to download from and start pulling the pieces
+			// TODO: Start a thread pool, assign part lists to threads, download the
+			// file (AppScokets) to a local file... then reassemble once all the threads
+			// have finalized.  Neat idea, reassemble once you get 4 parts?!
+
+		} catch (Exception e) {
+			System.err.println("Bad download command.  Usage: download <filename>");
 		}
 	}
 
@@ -285,13 +342,14 @@ public class ClientTerminal extends Thread {
 	private void helpCommand() {
 		System.out.println();
 		System.out.println("Commands:");
-		System.out.println("  help             This help menu");
-		System.out.println("  list             Prints the status information of all nodes on this JVM");
-		System.out.println("  kill [#]         Kills the given node, or the current if none is given");
-		System.out.println("  status           Prints status information on the current node");
-		System.out.println("  switch #         Switches to the given node");
-		System.out.println("  upload [path] #  Chunks and uploads a file to a # nodes in the network");
-		System.out.println("  quit             Exits the client program");
+		System.out.println("  help               This help menu");
+		System.out.println("  list               Prints the status information of all nodes on this JVM");
+		System.out.println("  kill [#]           Kills the given node, or the current if none is given");
+		System.out.println("  status             Prints status information on the current node");
+		System.out.println("  switch #           Switches to the given node");
+		System.out.println("  upload path #      Chunks and uploads a file to a # nodes in the network");
+		System.out.println("  download filename  Downloads the file uploaded by this user with that name");
+		System.out.println("  quit               Exits the client program");
 		System.out.println();
 	}
 

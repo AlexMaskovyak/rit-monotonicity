@@ -372,8 +372,8 @@ public class RaidsApp implements Application {
 
         // Heartbeat message - Reset Timer for whoever sent
         if ( msg instanceof HeartbeatMessage ) {
-            debug("received HeartbeatMessage");
-            debug(msg.toString());
+            // debug("received HeartbeatMessage");
+            // debug(msg.toString());
             HeartbeatMessage thump = (HeartbeatMessage) msg;
             NodeHandle thumper = thump.getHandle();
             m_heartHandler.receivedHeartbeatFrom(thumper);
@@ -385,7 +385,7 @@ public class RaidsApp implements Application {
         // Self Reminder Message - Send Heartbeat Thumps
         else if ( msg instanceof SelfReminder ) {
 	    	for (NodeHandle nh : m_heartHandler.getSendingList()) {
-	    		debug("sending heartbeat to " + nh.getId().toStringFull());
+	    		// debug("sending heartbeat to " + nh.getId().toStringFull());
 	    		routeMessageDirect(new HeartbeatMessage(m_node.getLocalNodeHandle()), nh);
 			}
         }
