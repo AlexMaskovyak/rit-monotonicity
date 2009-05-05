@@ -1,6 +1,7 @@
 package raids;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -147,6 +148,20 @@ public class ClientTerminal extends Thread {
 						if ( app.equals(m_app) ) { System.out.println("---------"); }
 						System.out.println();
 					}
+				}
+
+				// TODO: Debug Command, Remove once done - Joe
+				// Start 10 threads which have Node 0 sending the Buffer "Hello, World" to Node 1
+				else if ( line.startsWith("send") ) {
+
+					for (int i = 0; i < 20; i++) {
+						new Thread() {
+							public void run() {
+								m_apps.get(0).sendBufferToNode(ByteBuffer.wrap("Hello, World!".getBytes()), m_apps.get(1).getNode().getLocalNodeHandle());
+							}
+						}.start();
+					}
+
 				}
 
 				// Empty Command

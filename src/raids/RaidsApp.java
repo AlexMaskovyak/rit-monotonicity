@@ -1,5 +1,6 @@
 package raids;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -512,6 +513,17 @@ public class RaidsApp implements Application {
     public void routeMessageDirect(Message msg, NodeHandle nh) {
     	m_myapp.getEndpoint().route(null, msg, nh);
     }
+
+
+    /**
+     * Send a Buffer through MyApp, uses AppSockets
+     * @param buf the buffer of data
+     * @param nh the node to send the data to
+     */
+    public void sendBufferToNode(ByteBuffer buf, NodeHandle nh) {
+    	m_myapp.sendBufferToNode(buf, nh);
+    }
+
 
     /**
      * Status information on this node.
