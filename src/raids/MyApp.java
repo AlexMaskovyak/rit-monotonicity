@@ -1,5 +1,6 @@
 package raids;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -12,6 +13,7 @@ import rice.p2p.commonapi.NodeHandle;
 import rice.p2p.commonapi.RouteMessage;
 import rice.p2p.commonapi.appsocket.AppSocket;
 import rice.p2p.commonapi.appsocket.AppSocketReceiver;
+import util.BufferUtils;
 
 public class MyApp implements Application {
 
@@ -30,10 +32,6 @@ public class MyApp implements Application {
 		 * to handle reading from the socket.
 		 */
 		public void receiveSocket(AppSocket socket) {
-
-			// TODO: Give the AppSocketReader's a Unique Identifier? Maybe for temp filenames.
-			// NOTE: You have access to MyApp, so we can keep a synchronized counter.
-
 			socket.register(true, false, 30000, new AppSocketReader());
 			m_endpoint.accept(this);
 		}
@@ -48,21 +46,40 @@ public class MyApp implements Application {
 	/**
 	 * AppSocket Reading Class
 	 * Reads from a Socket into an internal ByteBuffer
+	 * and dumps the output to a unique TempFile.
 	 * @author Joseph Pecoraro
 	 */
 	class AppSocketReader implements AppSocketReceiver {
 
+	//	Constants
+
+		/** Tempfile Prefix */
+		private static final String TEMP_PREFIX = "RAIDS-appsocketreader-";
+
+		/** Tempfile Suffix */
+		private static final String TEMP_SUFFIX = ".tmp";
+
 		/** Buffer Size */
 		private static final int BUFFER_SIZE = 4*1024; /* 4 kilobytes */
 
+	//	Fields
+
 		/** The buffer of data being read from the socket */
 		private ByteBuffer m_inputBuffer;
+
+		/** The temporary file we will be dumping to */
+		private File m_tempFile;
 
 		/**
 		 * Basic Constructor
 		 */
 		public AppSocketReader() {
-			m_inputBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+			try {
+				m_inputBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+				m_tempFile = File.createTempFile(TEMP_PREFIX, TEMP_SUFFIX);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 		/**
@@ -72,32 +89,28 @@ public class MyApp implements Application {
 		 * @param canWrite can this socket be written to
 		 */
 		public void receiveSelectResult(AppSocket socket, boolean canRead, boolean canWrite) {
-			System.out.println("reading");
 			m_inputBuffer.clear();
 			try {
 
+				// Read
 				long ret = socket.read(m_inputBuffer);
 
-				// TODO: Do Something With ins!!! Because, the next read its data will get lost
-				// or the socket will be closed right now.
-				// NOTE: you have access to m_delegate which is the RaidsApp, so you can
-				// do ANYTHING.
-
-				System.out.println("read: " + ret);
+				// Done Reading
 				if ( ret == -1 ) {
+
 					System.out.println("Socket we were reading from is empty... closing");
 					socket.close();
-				} else if (ret != BUFFER_SIZE) {
 
-					// TODO: This won't work when we stop sending strings, it just shows it works.
-					// Debug, pull the "Hello, World" string
-					String s = new String( m_inputBuffer.array() );
-					System.out.println("  ---> " + s);
+					// TODO: Pass m_tempFile data to m_delegate the RaidsApp telling him where the file is
 
-					// Could indicate there is more to send!
-					System.out.println("Did not fill the entire buffer!  Only read: " + ret + " from the socket.");
+				}
+
+				// Still Reading - Filled the Buffer up with some data dump it to the temp file
+				else if (ret != 0) {
+					m_inputBuffer.flip();
+					BufferUtils.writeBufferToFile(m_inputBuffer, m_tempFile.getAbsolutePath(), true);
+					System.out.println("Dumped the " + ret + " bytes from the buffer into the temp file >> " + m_tempFile.getAbsolutePath() );
 					socket.register(true, false, 3000, this);
-
 				}
 
 			} catch (IOException ioe) {
@@ -105,7 +118,6 @@ public class MyApp implements Application {
 			}
 
 		}
-
 
 		/**
 		 * Handle Exceptions on read
@@ -155,7 +167,6 @@ public class MyApp implements Application {
 		 * @param canWrite can this socket be written to
 		 */
 		public void receiveSelectResult(AppSocket socket, boolean canRead, boolean canWrite) {
-			System.out.println("writing");
 			try {
 
 				// Write, Close if done, otherwise keep writing
@@ -197,7 +208,7 @@ public class MyApp implements Application {
 	 */
 	public MyApp(final Node node, Application delegate) {
 		m_delegate = delegate;
-		m_endpoint = node.buildEndpoint(this, "x");
+		m_endpoint = node.buildEndpoint(this, "RaidsAppEndpoint");
 		m_endpoint.accept(new AppSocketAccepter());
 		m_endpoint.register();
 	}

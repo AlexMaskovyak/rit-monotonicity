@@ -10,6 +10,7 @@ import java.util.Vector;
 
 import rice.environment.Environment;
 import rice.p2p.commonapi.NodeHandle;
+import util.BufferUtils;
 import chunker.ChunkedFileInfo;
 
 /**
@@ -296,7 +297,7 @@ public class ClientTerminal extends Thread {
 			String fileName = f.getName();
 
 			// chunk the file
-			ChunkedFileInfo cfi = chunker.Chunker.chunk( filePath, fileName, chunks);
+			final ChunkedFileInfo cfi = chunker.Chunker.chunk( filePath, fileName, chunks);
 
 			// find nodes with storage
 			int replicas = 2; // TODO: Make this an optional parameter for upload?
@@ -337,6 +338,20 @@ public class ClientTerminal extends Thread {
 			// Send the MasterListMessage to Everyone
 			for (NodeHandle nh : storageNodes) {
 				m_app.routeMessageDirect(mlm, nh);
+			}
+
+			// Send the raw file bytes to the First Node in the list for each part
+			final int maxSize = (int) cfi.getMaxChunkSize();
+			for (int i = 0; i < masters.length; i++) {
+				List<NodeHandle> partList = masters[i];
+				final NodeHandle nh = partList.get(0);
+				final String filename = cfi.getChunkPaths()[i];
+				new Thread() {
+					public void run() {
+						ByteBuffer buf = BufferUtils.getBufferForFile(filename, maxSize);
+						m_app.sendBufferToNode(buf, nh);
+					}
+				}.start();
 			}
 
 			// Print Out Message to the User
