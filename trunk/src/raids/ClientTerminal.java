@@ -346,9 +346,12 @@ public class ClientTerminal extends Thread {
 				List<NodeHandle> partList = masters[i];
 				final NodeHandle nh = partList.get(0);
 				final String filename = cfi.getChunkPaths()[i];
+				final String partHash = cfi.getHashForChunk(filename);
+				System.out.println("Sending " + partHash + " to " + nh.getId().toStringFull() );
 				new Thread() {
 					public void run() {
-						ByteBuffer buf = BufferUtils.getBufferForFile(filename, maxSize);
+						ByteBuffer buf = BufferUtils.getBufferForFile(filename, maxSize + BufferUtils.HASH_STRING_SIZE, partHash);
+						buf.flip();
 						m_app.sendBufferToNode(buf, nh);
 					}
 				}.start();
