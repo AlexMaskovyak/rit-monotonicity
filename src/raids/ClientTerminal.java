@@ -151,20 +151,6 @@ public class ClientTerminal extends Thread {
 					}
 				}
 
-				// TODO: Debug Command, Remove once done - Joe
-				// Start 10 threads which have Node 0 sending the Buffer "Hello, World" to Node 1
-				else if ( line.startsWith("send") ) {
-
-					for (int i = 0; i < 20; i++) {
-						new Thread() {
-							public void run() {
-								m_apps.get(0).sendBufferToNode(ByteBuffer.wrap("Hello, World!".getBytes()), m_apps.get(1).getNode().getLocalNodeHandle());
-							}
-						}.start();
-					}
-
-				}
-
 				// Empty Command
 				else if ( line.length() == 0 ) {
 					// Do nothing, the User just had a blank line.
