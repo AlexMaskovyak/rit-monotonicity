@@ -302,7 +302,7 @@ public class RaidsApp implements Application {
         });
 
         // Busy Wait to force this to be synchronous
-        synchronized (this) {
+        synchronized (m_node) {
             while ( !m_isDone ) {
             	try {
             		this.wait(500);
