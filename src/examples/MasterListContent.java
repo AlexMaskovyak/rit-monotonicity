@@ -17,16 +17,7 @@ import rice.p2p.commonapi.NodeHandle;
 public class MasterListContent extends PastContentList<NodeHandle> {
 
 	/**
-	 * Default Constructor
-	 * Creates an Empty list of Masters.
-	 * @param myId id of the content
-	 
-	public MasterListContent(Id myId) {
-		super( myId );
-	}
-
-	/**
-	 * Constructor.
+	 * Constructor
 	 * Initializes storage with an array of NodeHandles
 	 * @param myId id of the content
 	 * @param handles list of node handles
