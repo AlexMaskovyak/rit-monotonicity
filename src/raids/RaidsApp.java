@@ -1,5 +1,6 @@
 package raids;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -352,6 +353,27 @@ public class RaidsApp implements Application {
         });
 
     	return mlm;
+    }
+
+
+// AppSocket Callbacks
+
+    /**
+     * When an AppSocket successfully pulls a file over the wire it
+     * calls this callback saying it has completed the file download.
+     */
+    public void receivedFile(String partHash, File tempFile) {
+    	debug("-- received part: " + partHash + " --");
+
+    	// TODO: Update the MasterListMessage to send the filePartHashes? Thats unique
+
+    	// TODO: Update m_inventory using the partHash with the localFilePath!
+
+    	// TODO: Pull the latest m_inventory record via the partHash
+
+    	// TODO: If there is a Next node in the path, push the file to them
+    	// this is called "cascading" the file around the ring
+
     }
 
 
