@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
+import raids.PartIndicator;
+
 /**
  * Helper Functions for interactions between
  * ByteBuffers and Files.
@@ -15,10 +17,6 @@ import java.nio.channels.FileChannel;
  */
 public class BufferUtils {
 
-	/** The Size of a SHA1 Hash String as Bytes */
-	public static int HASH_STRING_SIZE = 40;
-
-
 	/**
 	 * Build a ByteBuffer solely for a file
 	 * @param filename the path to the file
@@ -26,7 +24,7 @@ public class BufferUtils {
 	 * @return a ByteBuffer containing that files data with the position at the end of the data load
 	 */
 	public static ByteBuffer getBufferForFile(String filename, int maxSize) {
-		return getBufferForFile(filename, maxSize, "");
+		return getBufferForFile(filename, maxSize, null);
 	}
 
 
@@ -35,10 +33,10 @@ public class BufferUtils {
 	 * Reference: Source: http://nadeausoftware.com/articles/2008/02/java_tip_how_read_files_quickly
 	 * @param filename the path to the file
 	 * @param maxSize the maximum size the buffer could be
-	 * @param prefixData a String to prefix onto the buffer, ignored if the empty string ""
+	 * @param prefixData an Object to prefix onto the buffer, ignored if null
 	 * @return a ByteBuffer containing that files data with the position at the end of the data load
 	 */
-	public static ByteBuffer getBufferForFile(String filename, int maxSize, String prefixData) {
+	public static ByteBuffer getBufferForFile(String filename, int maxSize, PartIndicator prefixData) {
 		try {
 
 			// Setup
@@ -47,8 +45,8 @@ public class BufferUtils {
 			ByteBuffer buf = ByteBuffer.allocate( maxSize );
 
 			// Prefix Data
-			if ( prefixData.length() != 0 ) {
-				buf.put( prefixData.getBytes() );
+			if ( prefixData != null ) {
+				buf.put( prefixData.toBytes() );
 			}
 
 			// File Data

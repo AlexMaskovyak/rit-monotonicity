@@ -362,8 +362,8 @@ public class RaidsApp implements Application {
      * When an AppSocket successfully pulls a file over the wire it
      * calls this callback saying it has completed the file download.
      */
-    public void receivedFile(String partHash, File tempFile) {
-    	debug("-- received part: " + partHash + " --");
+    public void receivedFile(PartIndicator partIndicator, File tempFile) {
+    	debug("-- received part: " + partIndicator + " --");
 
     	// TODO: Update the MasterListMessage to send the filePartHashes? Thats unique
 
