@@ -54,7 +54,7 @@ public class TestBufferUtils extends TestCase {
         assertEquals( expected.position(), actual.position() );
         assertEquals( expected.limit(), actual.limit() );
         assertEquals( expected.capacity(), actual.capacity() );
-        // assertEquals( expected, actual );
+        assertEquals( expected, actual );
 
         // Looking at the innards
         byte[] arr1 = expected.array();

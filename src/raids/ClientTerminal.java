@@ -332,7 +332,7 @@ public class ClientTerminal extends Thread {
 				List<NodeHandle> partList = masters[i];
 				final NodeHandle nh = partList.get(0);
 				final String filename = cfi.getChunkPaths()[i];
-				final PartIndicator pi = new PartIndicator(cfi.getOriginalFileHash(), i);
+				final PartIndicator pi = new PartIndicator(mlm.getLookupId().toStringFull(), i);
 				System.out.println("Sending " + pi.toString() + " to " + nh.getId().toStringFull() );
 				new Thread() {
 					public void run() {
