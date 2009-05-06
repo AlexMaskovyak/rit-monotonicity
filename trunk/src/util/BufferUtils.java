@@ -29,11 +29,11 @@ public class BufferUtils {
 
 
 	/**
-	 * Build a ByteBuffer for a file with a prefixed String
+	 * Build a ByteBuffer for a file with a prefixed PartIndicator object
 	 * Reference: Source: http://nadeausoftware.com/articles/2008/02/java_tip_how_read_files_quickly
 	 * @param filename the path to the file
 	 * @param maxSize the maximum size the buffer could be
-	 * @param prefixData an Object to prefix onto the buffer, ignored if null
+	 * @param prefixData a PartIndicator to prefix onto the buffer, ignored if null
 	 * @return a ByteBuffer containing that files data with the position at the end of the data load
 	 */
 	public static ByteBuffer getBufferForFile(String filename, int maxSize, PartIndicator prefixData) {

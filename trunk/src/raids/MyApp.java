@@ -102,13 +102,9 @@ public class MyApp implements Application {
 
                 // Done Reading
                 if ( ret == -1 ) {
-
                     System.out.println("Socket we were reading from is empty... closing");
                     socket.close();
-
-                    // TODO: Pass m_tempFile data to m_delegate the RaidsApp telling him where the file is
                     m_delegate.receivedFile(m_partIndicator, m_tempFile);
-
                 }
 
                 // Still Reading - Filled the Buffer up with some data dump it to the temp file
@@ -120,7 +116,6 @@ public class MyApp implements Application {
                         m_inputBuffer.get(bytes, 0, bytes.length);
                         System.out.println(m_inputBuffer.position());
                         m_partIndicator = new PartIndicator( bytes );
-                        System.out.println("GOT: " + m_partIndicator);
                     }
 
                     // Raw data is in the buffer

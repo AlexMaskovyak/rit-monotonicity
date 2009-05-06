@@ -67,7 +67,7 @@ public class TestBufferUtils extends TestCase {
 
 
     /**
-     * Test creating a ByteBuffer for a file and a string prefix
+     * Test creating a ByteBuffer for a file and a prefixed PartIndicator
      */
     public void testBufFileAndPrefix() {
 

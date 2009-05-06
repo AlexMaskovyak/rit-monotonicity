@@ -361,6 +361,8 @@ public class RaidsApp implements Application {
     /**
      * When an AppSocket successfully pulls a file over the wire it
      * calls this callback saying it has completed the file download.
+     * @param partIndicator details on the file and the part of the file received
+     * @param tempFile File where the data is now stored
      */
     public void receivedFile(PartIndicator partIndicator, File tempFile) {
     	debug("-- received part: " + partIndicator + " --");
