@@ -18,7 +18,7 @@ import util.BufferUtils;
  *
  * @author Joseph Pecoraro
  */
-public class BufferUtilsTest extends TestCase {
+public class TestBufferUtils extends TestCase {
 
 // Constants
 
@@ -93,7 +93,6 @@ public class BufferUtilsTest extends TestCase {
         byte[] arr1 = expected.array();
         byte[] arr2 = actual.array();
         for (int i = 0; i < arr1.length; i++) {
-        	System.out.println(i + ": " + arr1[i] + " " + arr2[i]);
             assertEquals( arr1[i], arr2[i] );
         }
 
