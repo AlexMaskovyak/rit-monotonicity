@@ -71,14 +71,14 @@ public class MyApp implements Application {
         private File m_tempFile;
 
         /** The hash of file part */
-        private String m_partHash;
+        private PartIndicator m_partIndicator;
 
         /**
          * Basic Constructor
          */
         public AppSocketReader() {
             try {
-                m_partHash = null;
+            	m_partIndicator = null;
                 m_inputBuffer = ByteBuffer.allocate(BUFFER_SIZE);
                 m_tempFile = File.createTempFile(TEMP_PREFIX, TEMP_SUFFIX);
             } catch (IOException e) {
@@ -107,7 +107,7 @@ public class MyApp implements Application {
                     socket.close();
 
                     // TODO: Pass m_tempFile data to m_delegate the RaidsApp telling him where the file is
-                    m_delegate.receivedFile(m_partHash, m_tempFile);
+                    m_delegate.receivedFile(m_partIndicator, m_tempFile);
 
                 }
 
@@ -115,11 +115,12 @@ public class MyApp implements Application {
                 else if (ret != 0) {
 
                     // If this is the first read, then there is a SHA1 in it!
-                    if ( m_partHash == null ) {
-                        byte[] sha1_ascii_bytes = new byte[BufferUtils.HASH_STRING_SIZE];
-                        m_inputBuffer.get(sha1_ascii_bytes, 0, sha1_ascii_bytes.length);
+                    if ( m_partIndicator == null ) {
+                        byte[] bytes = new byte[PartIndicator.SIZE];
+                        m_inputBuffer.get(bytes, 0, bytes.length);
                         System.out.println(m_inputBuffer.position());
-                        m_partHash = new String(sha1_ascii_bytes);
+                        m_partIndicator = new PartIndicator( bytes );
+                        System.out.println("GOT: " + m_partIndicator);
                     }
 
                     // Raw data is in the buffer
