@@ -62,6 +62,7 @@ public class RaidsApp implements Application {
 		private Id m_DHTLookupId;
 		private NodeHandle m_prev;
 		private NodeHandle m_next;
+		private boolean m_last;
 
 		/**
 		 * Default constructor.
@@ -74,12 +75,14 @@ public class RaidsApp implements Application {
 				String localPath,
 				Id DHTLookupId,
 				NodeHandle prev,
-				NodeHandle next ) {
+				NodeHandle next,
+				boolean last) {
 
 			m_localPath = localPath;
 			m_DHTLookupId = DHTLookupId;
 			m_prev = prev;
 			m_next = next;
+			m_last = last;
 		}
 
 		/**
@@ -116,6 +119,19 @@ public class RaidsApp implements Application {
 		public NodeHandle getNextNode() {
 			return m_next;
 		}
+
+		/**
+		 * Check if this is the last node in a ring
+		 * @return true if this is the last node in a ring, false otherwise.
+		 */
+		public boolean isLast() {
+			return m_last;
+		}
+
+		public void setLocalPath(String path) {
+			m_localPath = path;
+		}
+
 	}
 
 
@@ -158,7 +174,7 @@ public class RaidsApp implements Application {
     private MyApp m_myapp;
 
     /** Map of Files stored on this Node */
-    private Map<Id, MasterListFilePieceInfo> m_inventory;
+    private Map<PartIndicator, MasterListFilePieceInfo> m_inventory;
 
 
     /**
@@ -181,7 +197,7 @@ public class RaidsApp implements Application {
         m_isDone = true;
         m_masterList = null;
         m_heartHandler = new HeartHandler(this);
-        m_inventory = new HashMap<Id, MasterListFilePieceInfo>();
+        m_inventory = new HashMap<PartIndicator, MasterListFilePieceInfo>();
 
         // Setup an EveReporter
         if ( eveHost == null ) {
@@ -364,17 +380,44 @@ public class RaidsApp implements Application {
      * @param partIndicator details on the file and the part of the file received
      * @param tempFile File where the data is now stored
      */
-    public void receivedFile(PartIndicator partIndicator, File tempFile) {
+    public void receivedFile(final PartIndicator partIndicator, File tempFile) {
     	debug("-- received part: " + partIndicator + " --");
 
-    	// TODO: Update the MasterListMessage to send the filePartHashes? Thats unique
+    	// Update the inventory with the Local File Path
+    	MasterListFilePieceInfo mlfpi;
+    	synchronized (m_inventory) {
 
-    	// TODO: Update m_inventory using the partHash with the localFilePath!
+    		// NOTE: Possible race condition if you receive the file date faster then the
+    		// MasterListMessage saying you should store it.  This shouldn't happen, but
+    		// its possible.  So, in that case store it anyways.
+        	mlfpi = m_inventory.get(partIndicator);
+        	if ( mlfpi == null ) {
+        		debug("**** RACE CONDITION? ADDED TO TABLE BEFORE WE NEEDED IT *****");
+        		mlfpi = new MasterListFilePieceInfo(tempFile.getAbsolutePath(), null, null, null, false);
+        		m_inventory.put(partIndicator, mlfpi );
+        	} else {
+        		mlfpi.setLocalPath( tempFile.getAbsolutePath() );
+        	}
 
-    	// TODO: Pull the latest m_inventory record via the partHash
+		}
 
-    	// TODO: If there is a Next node in the path, push the file to them
+    	// If there is a Next node in the path, push the file to them
     	// this is called "cascading" the file around the ring
+    	// in the background
+    	if ( !mlfpi.isLast() ) {
+    		/*
+    		final NodeHandle next = mlfpi.getNextNode();
+    		final String filename = tempFile.getAbsolutePath();
+    		final int maxSize = (int) tempFile.getTotalSpace();
+			new Thread() {
+				public void run() {
+					ByteBuffer buf = BufferUtils.getBufferForFile(filename, maxSize + PartIndicator.SIZE, partIndicator);
+					buf.flip();
+					sendBufferToNode(buf, next);
+				}
+			}.start();
+			*/
+    	}
 
     }
 
@@ -421,7 +464,6 @@ public class RaidsApp implements Application {
 
         	// States
         	MasterListMessage mlm = (MasterListMessage) msg;
-        	List<Integer> filesToFetch = new ArrayList<Integer>();
 
         	// For Each Part List
         	NodeHandle prev, next;
@@ -430,24 +472,42 @@ public class RaidsApp implements Application {
         		List<NodeHandle> parts = allParts[i];
         		int idx = parts.indexOf( m_node.getLocalNodeHandle() );
 				if ( idx != -1 ) {
+					boolean last = false;
 
 					// Setup Prev
 					if ( idx == 0 ) {
 						prev = parts.get(parts.size()-1);
-						filesToFetch.add(Integer.valueOf(i));
 					} else {
 						prev = parts.get(idx-1);
 					}
 
 					// Setup Next
 					if ( idx == parts.size()-1 ) {
+						last = true;
 						next = parts.get(0);
 					} else {
 						next = parts.get(idx+1);
 					}
 
-					// Setup MasterListFilePieceInfo
-					m_inventory.put(mlm.getLookupId(), new MasterListFilePieceInfo("", mlm.getLookupId(), prev, next));
+					// The Hash Key
+					PartIndicator pi = new PartIndicator( mlm.getLookupId().toStringFull(), i);
+
+					// Setup MasterListFilePieceInfo for this File Part
+					synchronized (m_inventory) {
+
+						// NOTE: Possible Race condition if the file data is received before this message.
+						// If that was the case then there was a mostly blank entry already written, check for it
+						if ( m_inventory.containsKey(pi) ) {
+							debug("**** RACE CONDITION RECOVERED - NOTICED TABLE ENTRY AND REUSING IT *****");
+							MasterListFilePieceInfo oldInfo = m_inventory.get(pi);
+							MasterListFilePieceInfo newInfo = new MasterListFilePieceInfo(oldInfo.getLocalPath(), mlm.getLookupId(), prev, next, last);
+							m_inventory.put(pi, newInfo);
+						} else {
+							m_inventory.put(pi, new MasterListFilePieceInfo(null, mlm.getLookupId(), prev, next, last));
+							debug("PUT: " + pi.toString());
+						}
+
+					}
 
 					// Setup Heartbeats
 					m_heartHandler.listenForHearbeatsFrom(prev);
@@ -455,9 +515,6 @@ public class RaidsApp implements Application {
 
 				}
 			}
-
-        	// TODO: Open AppSockets for Parts
-        	// see filesToFetch for part numbers
 
         }
 

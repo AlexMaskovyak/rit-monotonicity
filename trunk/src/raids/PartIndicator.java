@@ -58,15 +58,38 @@ public class PartIndicator {
 		ByteBuffer buf = ByteBuffer.allocate(SIZE);
 		buf.put( m_origHash.getBytes() );
 		buf.putInt(m_partNum);
-		System.out.println(buf.position());
-		System.out.println(buf.limit());
-		System.out.println(buf.capacity());
 		return buf.array();
 	}
 
 
 	/**
-	 * Debug Purposes
+	 * Equality by checking components
+	 * @return true if both objects deal with the same file hash and part number
+	 */
+	public boolean equals(Object other) {
+		if ( other instanceof PartIndicator ) {
+			PartIndicator pi = (PartIndicator) other;
+			return ( m_partNum == pi.getPartNum() ) && ( m_origHash.equals(pi.getOrigHash()) );
+		}
+		return false;
+	}
+
+
+	/**
+	 * Attempt at a unique hash code in 2^32 space
+	 * @return a primitive hash of the SHA1 and part number
+	 */
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((m_origHash == null) ? 0 : m_origHash.hashCode());
+		result = prime * result + m_partNum;
+		return result;
+	}
+
+
+	/**
+	 * For Debug
 	 * @return a String representation of this object
 	 */
 	public String toString() {
