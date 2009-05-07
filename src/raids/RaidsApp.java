@@ -304,6 +304,7 @@ public class RaidsApp implements Application {
     	return lookupMasterList(fileId);
     }
 
+
     /**
      * Grab the latest Master List For the Given Id (synchronous)
      * @param fileId the PastryId for the Filename
@@ -386,12 +387,12 @@ public class RaidsApp implements Application {
      * @param tempFile File where the data is now stored
      */
     public void receivedFile(final PartIndicator partIndicator, File tempFile) {
-    	debug("-- received part: " + partIndicator + " --");
+    	debug("Received part: " + partIndicator);
 
     	// Was this an expected file for a download?
     	synchronized (m_expectedParts) {
     		if ( m_expectedParts.containsKey(partIndicator) ) {
-    			debug("Got an expected part: " + partIndicator);
+    			debug("Received Expected part: " + partIndicator);
         		expectedPartDownloaded(partIndicator, tempFile);
         		return;
         	}
@@ -522,7 +523,7 @@ public class RaidsApp implements Application {
 
 					}
 
-					// Setup Heartbeats
+					// Start Heartbeats
 					m_heartHandler.listenForHearbeatsFrom(prev);
 					m_heartHandler.sendHeartbeatsTo(next);
 
@@ -551,7 +552,6 @@ public class RaidsApp implements Application {
         	NodeHandle requester = dlmsg.getRequester();
 
         	// Special Case, the requester is me!
-        	// TODO: Refactor this is duplicated code
         	if ( dlmsg.getRequester().equals(m_node.getLocalNodeHandle()) ) {
         		debug("Special Case... sending to myself!");
 				expectedPartDownloaded( dlmsg.getPartIndicator(), file );
@@ -588,17 +588,7 @@ public class RaidsApp implements Application {
 	 * 			request/master request.
 	 */
 	public NodeHandle[] requestSpace(int num, long size){
-
-/*	    System.out.println("Requesting Space Node "+endpoint.getLocalNodeHandle()+" anycasting "+size/num);
-        ScribeContent myMessage = new StorageRequest(endpoint.getLocalNodeHandle(), "test");
-     //   Topic myTopic = new Topic(m_node.getId());
-
-	    m_scribe.publish(m_topic, myMessage);*/
-		NodeHandle[] nh =  ms.requestSpace(num, size);
-
-		ms.sendFile(nh[0]);
-		return nh;
-//		m_pApp.requestSpace(num, size);
+		return ms.requestSpace(num, size);
     }
 
 
