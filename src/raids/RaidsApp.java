@@ -19,6 +19,7 @@ import rice.p2p.past.PastContent;
 import rice.p2p.past.PastImpl;
 import rice.pastry.PastryNode;
 import rice.persistence.StorageManager;
+import util.BufferUtils;
 import eve.EveReporter;
 import eve.EveType;
 
@@ -176,6 +177,9 @@ public class RaidsApp implements Application {
     /** Map of Files stored on this Node */
     private Map<PartIndicator, MasterListFilePieceInfo> m_inventory;
 
+    /** Expected parts */
+    private Map<PartIndicator, File> m_expectedParts;
+
 
     /**
      * Basic Constructor that rides on top of the PastImpl Constructor
@@ -198,6 +202,7 @@ public class RaidsApp implements Application {
         m_masterList = null;
         m_heartHandler = new HeartHandler(this);
         m_inventory = new HashMap<PartIndicator, MasterListFilePieceInfo>();
+        m_expectedParts = new HashMap<PartIndicator, File>();
 
         // Setup an EveReporter
         if ( eveHost == null ) {
@@ -383,6 +388,15 @@ public class RaidsApp implements Application {
     public void receivedFile(final PartIndicator partIndicator, File tempFile) {
     	debug("-- received part: " + partIndicator + " --");
 
+    	// Was this an expected file for a download?
+    	synchronized (m_expectedParts) {
+    		if ( m_expectedParts.containsKey(partIndicator) ) {
+    			debug("Got an expected part: " + partIndicator);
+        		expectedPartDownloaded(partIndicator, tempFile);
+        		return;
+        	}
+		}
+
     	// Update the inventory with the Local File Path
     	MasterListFilePieceInfo mlfpi;
     	synchronized (m_inventory) {
@@ -394,9 +408,10 @@ public class RaidsApp implements Application {
         	if ( mlfpi == null ) {
         		debug("**** RACE CONDITION? ADDED TO TABLE BEFORE WE NEEDED IT *****");
         		mlfpi = new MasterListFilePieceInfo(tempFile.getAbsolutePath(), null, null, null, false);
-        		m_inventory.put(partIndicator, mlfpi );
+        		m_inventory.put(partIndicator, mlfpi);
         	} else {
         		mlfpi.setLocalPath( tempFile.getAbsolutePath() );
+        		m_inventory.put(partIndicator, mlfpi);
         	}
 
 		}
@@ -405,10 +420,9 @@ public class RaidsApp implements Application {
     	// this is called "cascading" the file around the ring
     	// in the background
     	if ( !mlfpi.isLast() ) {
-    		/*
     		final NodeHandle next = mlfpi.getNextNode();
     		final String filename = tempFile.getAbsolutePath();
-    		final int maxSize = (int) tempFile.getTotalSpace();
+    		final int maxSize = (int) tempFile.length();
 			new Thread() {
 				public void run() {
 					ByteBuffer buf = BufferUtils.getBufferForFile(filename, maxSize + PartIndicator.SIZE, partIndicator);
@@ -416,7 +430,6 @@ public class RaidsApp implements Application {
 					sendBufferToNode(buf, next);
 				}
 			}.start();
-			*/
     	}
 
     }
@@ -518,6 +531,41 @@ public class RaidsApp implements Application {
 
         }
 
+        // DownloadMessage
+        else if ( msg instanceof DownloadMessage ) {
+        	debug("received DownloadMessage");
+
+        	DownloadMessage dlmsg = (DownloadMessage) msg;
+        	MasterListFilePieceInfo mlfpi = m_inventory.get(dlmsg.getPartIndicator());
+
+        	// Requested a download for a file we don't have yet
+        	// TODO: Add Fault Tolerance
+        	if ( mlfpi == null ) {
+        		return;
+        	}
+
+        	// Send the file to the requester
+        	File file = new File(mlfpi.getLocalPath());
+        	String filename = file.getAbsolutePath();
+        	int maxSize = (int) file.length();
+        	NodeHandle requester = dlmsg.getRequester();
+
+        	// Special Case, the requester is me!
+        	// TODO: Refactor this is duplicated code
+        	if ( dlmsg.getRequester().equals(m_node.getLocalNodeHandle()) ) {
+        		debug("Special Case... sending to myself!");
+				expectedPartDownloaded( dlmsg.getPartIndicator(), file );
+        	}
+
+        	// Normal case, send the file
+        	else {
+	        	ByteBuffer buf = BufferUtils.getBufferForFile(filename, maxSize + PartIndicator.SIZE, dlmsg.getPartIndicator());
+	        	buf.flip();
+	        	debug("Sending: " + dlmsg.getPartIndicator() + " to " + requester.getId().toStringFull());
+	        	sendBufferToNode(buf, requester);
+        	}
+        }
+
         // ...
         else if ( false ) {
 
@@ -554,16 +602,10 @@ public class RaidsApp implements Application {
     }
 
 
-    @Override
+    /**
+     * Whenever Messages pass through this node
+     */
     public boolean forward(RouteMessage msg) {
-
-        // Debug
-        // debug("inside forward");
-
-        // Try out Eve
-        // m_reporter.log(m_username, msg.getNextHopHandle().getId().toStringFull(), EveType.FORWARD, "I'm routing a message!");
-
-        // Delegate the normal details to the PastImpl
     	try {
     		return m_past.forward(msg);
     	} catch (Exception e) {}
@@ -571,15 +613,11 @@ public class RaidsApp implements Application {
     }
 
 
-    @Override
+    /**
+     * Normal Updates
+     */
     public void update(NodeHandle handle, boolean joined) {
-
-        // Debug
-        // debug("inside update");
-
-        // Delegate the normal details to the PastImpl
     	m_past.update(handle, joined);
-
     }
 
 
@@ -603,6 +641,49 @@ public class RaidsApp implements Application {
      */
     public void sendBufferToNode(ByteBuffer buf, NodeHandle nh) {
     	m_myapp.sendBufferToNode(buf, nh);
+    }
+
+
+    /**
+     * Expecting incoming parts.
+     * @param fildId the file id
+     * @param parts the number of parts to expect
+     */
+    public void setExpectedParts(String fileId, int parts) {
+    	for (int i = 0; i < parts; i++) {
+    		PartIndicator pi = new PartIndicator(fileId, i);
+    		debug("Expecting: " + pi);
+			m_expectedParts.put(pi, null);
+		}
+    }
+
+
+    /**
+     * When an expected part has been downloaded.
+     * @param partIndicator the part that was downloaded
+     * @param file file where the date is stored
+     */
+    public void expectedPartDownloaded(PartIndicator partIndicator, File file) {
+    	synchronized (m_expectedParts) {
+
+    		// Fill in the entry in the expected data structure
+    		m_expectedParts.put(partIndicator, file);
+
+	    	// Check if all downloaded
+	    	boolean allDownloaded = true;
+	    	for (PartIndicator pi : m_expectedParts.keySet()) {
+				if ( m_expectedParts.get(pi) == null ) {
+					allDownloaded = false;
+					break;
+				}
+			}
+
+	    	// When all downloaded
+	    	if ( allDownloaded ) {
+	    		System.out.println("ALL PARTS DOWNLOADED!!!!");
+	    	}
+
+    	}
     }
 
 

@@ -1,5 +1,6 @@
 package raids;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 
 /**
@@ -9,7 +10,7 @@ import java.nio.ByteBuffer;
  *
  * @author Joseph Pecoraro
  */
-public class PartIndicator {
+public class PartIndicator implements Serializable {
 
 //	Constants
 
