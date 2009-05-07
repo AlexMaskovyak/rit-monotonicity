@@ -257,6 +257,18 @@ public class ClientTerminal extends Thread {
 			// file (AppScokets) to a local file... then reassemble once all the threads
 			// have finalized.  Neat idea, reassemble once you get 4 parts?!
 
+			// Tell the App we are expecting these files
+			String lookupIdString = mlm.getLookupId().toStringFull();
+			m_app.setExpectedParts(lookupIdString, mlm.getParts().length);
+
+			// Send a Download message to the first node in the list containing a file
+			// TODO: Add Fault Tolerance
+			for (int i = 0; i < parts.length; i++) {
+				NodeHandle nh = parts[i].get(0);
+				PartIndicator pi = new PartIndicator(lookupIdString, i);
+				m_app.routeMessageDirect(new DownloadMessage(pi, m_app.getNode().getLocalNodeHandle()), nh);
+			}
+
 		} catch (Exception e) {
 			System.err.println("Bad download command.  Usage: download <filename>");
 		}

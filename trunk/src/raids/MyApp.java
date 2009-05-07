@@ -114,7 +114,6 @@ public class MyApp implements Application {
                     if ( m_partIndicator == null ) {
                         byte[] bytes = new byte[PartIndicator.SIZE];
                         m_inputBuffer.get(bytes, 0, bytes.length);
-                        System.out.println(m_inputBuffer.position());
                         m_partIndicator = new PartIndicator( bytes );
                     }
 
