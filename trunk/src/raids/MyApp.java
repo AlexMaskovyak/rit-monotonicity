@@ -17,8 +17,13 @@ import util.BufferUtils;
 
 public class MyApp implements Application {
 
+//	Constants
 
-// Inner Classes
+	/** Generic Timeout for AppSocket Connections */
+	private static int TIMEOUT = 30000; /* 30 seconds */
+
+
+// 	Inner Classes
 
     /**
      * AppSocket Accepter Class
@@ -32,7 +37,7 @@ public class MyApp implements Application {
          * to handle reading from the socket.
          */
         public void receiveSocket(AppSocket socket) {
-            socket.register(true, false, 30000, new AppSocketReader());
+            socket.register(true, false, TIMEOUT, new AppSocketReader());
             m_endpoint.accept(this);
         }
 
@@ -51,7 +56,7 @@ public class MyApp implements Application {
      */
     class AppSocketReader implements AppSocketReceiver {
 
-    //	Constants
+    //	Inner Constants
 
         /** Tempfile Prefix */
         private static final String TEMP_PREFIX = "RAIDS-appsocketreader-";
@@ -173,7 +178,7 @@ public class MyApp implements Application {
          * @param socket the socket being received
          */
         public void receiveSocket(AppSocket socket) {
-            socket.register(false, true, 30000, this);
+            socket.register(false, true, TIMEOUT, this);
         }
 
         /**
@@ -191,7 +196,7 @@ public class MyApp implements Application {
                     socket.close();
                     m_outputBuffer.clear();
                 } else {
-                    socket.register(false, true, 30000, this);
+                    socket.register(false, true, TIMEOUT, this);
                 }
 
             } catch (IOException ioe) {
@@ -238,7 +243,7 @@ public class MyApp implements Application {
      * @param nh the node to send the buffer to
      */
     public void sendBufferToNode(ByteBuffer buf, NodeHandle nh) {
-        m_endpoint.connect(nh, new AppSocketWriter(buf), 30000);
+        m_endpoint.connect(nh, new AppSocketWriter(buf), TIMEOUT);
     }
 
 
