@@ -101,9 +101,13 @@ public class MyApp implements Application {
                 m_inputBuffer.flip();
 
                 // Done Reading
+                // Special Case for an Empty File - Delete the temp file and send null to the delegate
                 if ( ret == -1 ) {
-                    System.out.println("Socket we were reading from is empty... closing");
                     socket.close();
+                    if ( m_tempFile.length() == 0 ) {
+                    	m_tempFile.delete();
+                    	m_tempFile = null;
+                    }
                     m_delegate.receivedFile(m_partIndicator, m_tempFile);
                 }
 
@@ -115,6 +119,7 @@ public class MyApp implements Application {
                         byte[] bytes = new byte[PartIndicator.SIZE];
                         m_inputBuffer.get(bytes, 0, bytes.length);
                         m_partIndicator = new PartIndicator( bytes );
+                        ret -= m_inputBuffer.position();
                     }
 
                     // Raw data is in the buffer

@@ -10,8 +10,10 @@ import java.util.Map;
 import rice.Continuation;
 import rice.p2p.commonapi.Application;
 import rice.p2p.commonapi.CancellableTask;
+import rice.p2p.commonapi.DeliveryNotification;
 import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.Message;
+import rice.p2p.commonapi.MessageReceipt;
 import rice.p2p.commonapi.Node;
 import rice.p2p.commonapi.NodeHandle;
 import rice.p2p.commonapi.RouteMessage;
@@ -95,7 +97,7 @@ public class RaidsApp implements Application {
 		}
 
 		/**
-		 * Obtain the key to finding the masterlist associated with this file
+		 * Obtain the key to finding the master list associated with this file
 		 * piece.
 		 * @return Key to the DHT.
 		 */
@@ -136,7 +138,12 @@ public class RaidsApp implements Application {
 	}
 
 
-// Fields
+//	Constants
+
+	/** Indicate a Missing File - Special Case where no-one had the file */
+	private File MISSING_FILE = new File("/");  // Some Random Directory... Root is easy
+
+// 	Fields
 
     /** PAST */
     private PastImpl m_past;
@@ -180,6 +187,9 @@ public class RaidsApp implements Application {
     /** Expected parts */
     private Map<PartIndicator, File> m_expectedParts;
 
+    /** Expected parts should come from */
+    private List<NodeHandle>[] m_expectedPartOwners;
+
 
     /**
      * Basic Constructor that rides on top of the PastImpl Constructor
@@ -203,6 +213,7 @@ public class RaidsApp implements Application {
         m_heartHandler = new HeartHandler(this);
         m_inventory = new HashMap<PartIndicator, MasterListFilePieceInfo>();
         m_expectedParts = new HashMap<PartIndicator, File>();
+        m_expectedPartOwners = null;
 
         // Setup an EveReporter
         if ( eveHost == null ) {
@@ -389,7 +400,7 @@ public class RaidsApp implements Application {
     public void receivedFile(final PartIndicator partIndicator, File tempFile) {
     	debug("Received part: " + partIndicator);
 
-    	// Was this an expected file for a download?
+    	// Was this an expected file for a download? Null or otherwise report it!
     	synchronized (m_expectedParts) {
     		if ( m_expectedParts.containsKey(partIndicator) ) {
     			debug("Received Expected part: " + partIndicator);
@@ -397,6 +408,12 @@ public class RaidsApp implements Application {
         		return;
         	}
 		}
+
+    	// If the file was null then we can ignore it
+    	if ( tempFile == null ) {
+    		debug("WARNING: Ignoreing Empty File sent to use. This should never happen!");
+    		return;
+    	}
 
     	// Update the inventory with the Local File Path
     	MasterListFilePieceInfo mlfpi;
@@ -474,7 +491,7 @@ public class RaidsApp implements Application {
 
         // MasterListMessage message
         else if ( msg instanceof MasterListMessage ) {
-        	debug("received MasterListMessage");
+        	// debug("received MasterListMessage");
 
         	// States
         	MasterListMessage mlm = (MasterListMessage) msg;
@@ -518,7 +535,7 @@ public class RaidsApp implements Application {
 							m_inventory.put(pi, newInfo);
 						} else {
 							m_inventory.put(pi, new MasterListFilePieceInfo(null, mlm.getLookupId(), prev, next, last));
-							debug("PUT: " + pi.toString());
+							// debug("PUT: " + pi.toString());
 						}
 
 					}
@@ -537,11 +554,14 @@ public class RaidsApp implements Application {
         	debug("received DownloadMessage");
 
         	DownloadMessage dlmsg = (DownloadMessage) msg;
+        	NodeHandle requester = dlmsg.getRequester();
         	MasterListFilePieceInfo mlfpi = m_inventory.get(dlmsg.getPartIndicator());
 
-        	// Requested a download for a file we don't have yet
-        	// TODO: Add Fault Tolerance
+        	// We Don't Have the File - Send back an empty file (special indicator that we have it!)
         	if ( mlfpi == null ) {
+        		debug( requester.getId().toStringFull() + " asked me for something I don't have yet. Sending them an empty file");
+        		ByteBuffer buf = ByteBuffer.wrap( dlmsg.getPartIndicator().toBytes() );
+        		sendBufferToNode(buf, requester);
         		return;
         	}
 
@@ -549,7 +569,6 @@ public class RaidsApp implements Application {
         	File file = new File(mlfpi.getLocalPath());
         	String filename = file.getAbsolutePath();
         	int maxSize = (int) file.length();
-        	NodeHandle requester = dlmsg.getRequester();
 
         	// Special Case, the requester is me!
         	if ( dlmsg.getRequester().equals(m_node.getLocalNodeHandle()) ) {
@@ -564,6 +583,7 @@ public class RaidsApp implements Application {
 	        	debug("Sending: " + dlmsg.getPartIndicator() + " to " + requester.getId().toStringFull());
 	        	sendBufferToNode(buf, requester);
         	}
+
         }
 
         // ...
@@ -625,6 +645,34 @@ public class RaidsApp implements Application {
 
 
     /**
+     * Send a DownloadMessage through MyApp, with a Timeout Failsafe
+     * NOTE: Anything with MyApp is a hack around a FreePastry issue!
+     * @param msg the message to send
+     * @param nh the NodeHandle to send this message directly to
+     */
+    public void sendDownloadMessage(DownloadMessage msg, NodeHandle nh) {
+    	final PartIndicator pi = msg.getPartIndicator();
+    	m_myapp.getEndpoint().route(null, msg, nh, new DeliveryNotification() {
+
+			/**
+			 * Timeout when trying to download a file.  So we assume the
+			 * node DOES NOT have the file and continue as though we
+			 * received a null file.
+			 * @param receipt information on the Message
+			 * @param e an exception from the message
+			 */
+			public void sendFailed(MessageReceipt receipt, Exception e) {
+				receivedFile(pi, null);
+			}
+
+			/** Ignored */
+			public void sent(MessageReceipt arg0) {}
+
+    	});
+    }
+
+
+    /**
      * Send a Buffer through MyApp, uses AppSockets
      * @param buf the buffer of data
      * @param nh the node to send the data to
@@ -639,7 +687,8 @@ public class RaidsApp implements Application {
      * @param fildId the file id
      * @param parts the number of parts to expect
      */
-    public void setExpectedParts(String fileId, int parts) {
+    public void setExpectedParts(String fileId, int parts, List<NodeHandle>[] owners) {
+    	m_expectedPartOwners = owners;
     	for (int i = 0; i < parts; i++) {
     		PartIndicator pi = new PartIndicator(fileId, i);
     		debug("Expecting: " + pi);
@@ -649,17 +698,58 @@ public class RaidsApp implements Application {
 
 
     /**
+     * When attempting to download a part from a Node, remove that
+     * node from the list so we don't retry that node.
+     * @param part the part number
+     * @param nh the node
+     */
+    public void attemptDownloadPartFrom(int part, NodeHandle nh) {
+    	m_expectedPartOwners[part].remove(nh);
+    }
+
+
+    /**
      * When an expected part has been downloaded.
      * @param partIndicator the part that was downloaded
      * @param file file where the date is stored
      */
     public void expectedPartDownloaded(PartIndicator partIndicator, File file) {
+    	File f = file;
     	synchronized (m_expectedParts) {
 
-    		// Fill in the entry in the expected data structure
-    		m_expectedParts.put(partIndicator, file);
+    		// If the file was null, then we have to try downloading from someone else
+    		if ( f == null ) {
 
-	    	// Check if all downloaded
+    			// Look at the list of nodes for this part to choose a random node,
+    			int part = partIndicator.getPartNum();
+    			int size = m_expectedPartOwners[part].size();
+    			if ( size != 0 ) {
+
+	    			// Choose a random node and try the download again
+	    			debug("Expected part was null, sending another download message out!");
+	    			int rand = m_node.getEnvironment().getRandomSource().nextInt(size);
+	    			NodeHandle nh = m_expectedPartOwners[part].get(rand);
+	    			attemptDownloadPartFrom(part, nh);
+	    			sendDownloadMessage(new DownloadMessage(partIndicator, m_node.getLocalNodeHandle()), nh);
+
+	    			// Break the algorithm, keeping the value in the m_expectedParts
+	    			// null, so we don't think we downloaded the part yet.
+	    			return;
+
+    			}
+
+    			// The size of the list was 0, therefore no-one had the file!
+    			// Continue with the normal algorithm, marking the file as MISSING
+    			// so that we will end eventually and we will know that this part is gone.
+    			debug("AHHHH!  NO-ONE HAS: " + partIndicator + ". Marked as MISSING_FILE!");
+				f = MISSING_FILE;
+
+    		}
+
+    		// Fill in the entry in the expected data structure
+    		m_expectedParts.put(partIndicator, f);
+
+	    	// Check if all parts were downloaded
 	    	boolean allDownloaded = true;
 	    	for (PartIndicator pi : m_expectedParts.keySet()) {
 				if ( m_expectedParts.get(pi) == null ) {
@@ -668,12 +758,39 @@ public class RaidsApp implements Application {
 				}
 			}
 
-	    	// When all downloaded
+	    	// When all are downloaded
 	    	if ( allDownloaded ) {
-	    		System.out.println("ALL PARTS DOWNLOADED!!!!");
+	    		allPartsDownloaded();
 	    	}
 
     	}
+    }
+
+
+    /**
+     * Called when all of the expected parts are potentially downloaded,
+     * meaning we should have everything we need!  First, check to make
+     * sure all the parts are valid.
+     */
+    private void allPartsDownloaded() {
+
+    	// Count missing files, ones that couldn't be downloaded because no-one had them
+    	int missingFiles = 0;
+    	for (PartIndicator pi : m_expectedParts.keySet()) {
+			if ( m_expectedParts.get(pi).equals(MISSING_FILE) ) {
+				missingFiles++;
+			}
+		}
+
+    	// Too many missing files to reassemble
+    	if (missingFiles > 1) {
+    		debug("TOO MANY MISSING FILES. YOU'RE DOOMED.");
+    		return;
+    	}
+
+    	// All Good
+    	System.out.println("ENOUGH PARTS SUCCESSFULLY DOWNLOADED!!!!");
+
     }
 
 
