@@ -351,6 +351,8 @@ public class ClientTerminal extends Thread {
 						ByteBuffer buf = BufferUtils.getBufferForFile(filename, maxSize + PartIndicator.SIZE, pi);
 						buf.flip();
 						m_app.sendBufferToNode(buf, nh);
+						// cleanup pieces
+						(new File( filename ) ).delete();
 					}
 				}.start();
 			}
