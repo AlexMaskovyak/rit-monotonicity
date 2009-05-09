@@ -48,6 +48,9 @@ public class ClientTerminal extends Thread {
 	/** Download Command */
 	private static final String DOWNLOAD = "download";
 
+	/** Second Download Command */
+	private static final String DL = "dl";
+
 	/** Kill Command */
 	private static final String KILL = "kill";
 
@@ -132,6 +135,12 @@ public class ClientTerminal extends Thread {
 				// Download Command
 				else if ( line.startsWith(DOWNLOAD) ) {
 					line = line.replaceFirst(DOWNLOAD, "").trim();
+					downloadCommand(line);
+				}
+
+				// Also a Download Command
+				else if ( line.startsWith(DL) ) {
+					line = line.replaceFirst(DL, "").trim();
 					downloadCommand(line);
 				}
 
