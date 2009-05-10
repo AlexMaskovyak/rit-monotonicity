@@ -6,6 +6,7 @@ import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.Message;
 import rice.p2p.commonapi.NodeHandle;
 import rice.p2p.past.ContentHashPastContent;
+import rice.p2p.past.PastContent;
 
 /**
  * Sent when a file upload points have been determined. Contains the node list
@@ -58,6 +59,24 @@ public class MasterListMessage extends ContentHashPastContent implements Message
         buf.append( m_lookupId.toStringFull() );
         for (List<NodeHandle> l : m_parts) { buf.append( l.toString() + "\n" ); }
         return buf.toString();
+    }
+
+
+//	Required to allow Replacements
+
+    /**
+     * Always store the newest.
+     */
+    public PastContent checkInsert(Id id, PastContent existing) {
+    	return this;
+    }
+
+
+    /**
+     * Value can change
+     */
+    public boolean isMutable() {
+    	return true;
     }
 
 
