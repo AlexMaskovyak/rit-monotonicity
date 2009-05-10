@@ -817,7 +817,7 @@ public class RaidsApp implements Application {
     		debug( "Chunks to assemble: " + s );
     	}
     	
-    	Chunker.reassemble(iPath, fileChunks, "C:\\", "download.txt");
+    	Chunker.reassemble(iPath, fileChunks, "/", "download.txt");
     	
     	System.out.println("FINISHED ASSEMBLING FILE.");
     	
