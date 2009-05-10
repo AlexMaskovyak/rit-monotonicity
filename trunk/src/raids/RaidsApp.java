@@ -26,6 +26,7 @@ import rice.p2p.past.PastImpl;
 import rice.pastry.PastryNode;
 import rice.persistence.StorageManager;
 import util.BufferUtils;
+import util.SHA1;
 import eve.EveReporter;
 import eve.EveType;
 
@@ -192,6 +193,9 @@ public class RaidsApp implements Application {
     /** Expected parts */
     private Map<PartIndicator, File> m_expectedParts;
 
+    /** Expected reassembled file name after downloading all pieces */
+    private String m_expectedReassembledFileName;
+    
     /** Expected parts should come from */
     private List<NodeHandle>[] m_expectedPartOwners;
 
@@ -702,6 +706,13 @@ public class RaidsApp implements Application {
 		}
     }
 
+    /**
+     * Expecting the parts to be reassembled into a file with this name.
+     * @param reassembledFileName the reassembled file's name.
+     */
+    public void setExpectedReassembledFileName( String reassembledFileName ) {
+    	m_expectedReassembledFileName = reassembledFileName;
+    }
 
     /**
      * When attempting to download a part from a Node, remove that
@@ -802,14 +813,15 @@ public class RaidsApp implements Application {
     	int numberOfChunks = m_expectedParts.size();
     	String[] fileChunks = new String[ numberOfChunks ];
     	String iPath = null;
-
+    	String outPath = System.getProperty("user.home") + File.separatorChar;
+    	
     	Set<Entry<PartIndicator, File>> partsAndFiles = m_expectedParts.entrySet();
     	for( Entry<PartIndicator, File> entry : partsAndFiles ) {
     		PartIndicator pi = entry.getKey();
     		File file = entry.getValue();
     		fileChunks[ pi.getPartNum() ] = file.getName();
     		if( iPath == null ) {
-    			iPath = file.getParentFile().getAbsolutePath();
+    			iPath = file.getParentFile().getAbsolutePath() + File.separatorChar;
     		}
     	}
 
@@ -818,10 +830,43 @@ public class RaidsApp implements Application {
     		debug( "Chunks to assemble: " + s );
     	}
 
-    	Chunker.reassemble(iPath + "/", fileChunks, "/", "download.txt");
+    	Chunker.reassemble(
+    			iPath, 
+    			fileChunks, 
+    			outPath, 
+    			m_expectedReassembledFileName );
 
-    	System.out.println("FINISHED ASSEMBLING FILE.");
+    	debug( String.format(
+    			"FINISHED ASSEMBLING FILE TO '%s'.", 
+    			outPath + m_expectedReassembledFileName ) );
 
+    	// Verify existence after assembly
+    	File reassembledFile = new File( outPath + m_expectedReassembledFileName );
+    	if( !reassembledFile.exists() ) {
+    		debug( "REASSEMBLED FILE DOESN'T EXIST!  ERROR OCCURRED SOMEWHERE!");
+    		return;
+    	}
+    	
+    	// Verify hash after assembly
+    	String originalHash = m_personalFileList.get( 
+    			m_personalFileList.indexOf( 
+    					new PersonalFileInfo( 
+    							m_expectedReassembledFileName, 
+    							null ) ) ).getHash();
+    	
+    	String reassembledHash = SHA1.getInstance().hash( reassembledFile );
+    	
+    	debug( String.format(
+    			"Original hash: '%s' new hash: '%s'\n", originalHash, reassembledHash ) );
+    	
+    	if( !reassembledHash.equals( originalHash ) ) {
+    		debug( "REASSEMBLED FILE'S HASH IS INCORRECT!  RECOMMENDATION: ATTEMPT REDOWNLOAD" );
+    		return;
+    	}
+    	
+    	debug( String.format(
+    			"DOWNLOAD, REASSEMBLY AND VERIFICATION COMPLETE FOR: '%s'", 
+    			reassembledFile.getAbsolutePath() ) );
     }
 
 
