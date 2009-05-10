@@ -6,6 +6,7 @@ import java.util.Vector;
 
 import rice.p2p.commonapi.Id;
 import rice.p2p.past.ContentHashPastContent;
+import rice.p2p.past.PastContent;
 
 /**
  * PastContent storage data structure that stores a List of Items.
@@ -68,5 +69,22 @@ public class PastContentList<E extends Serializable> extends ContentHashPastCont
 	public String toString() {
 		return "PastContentList: " + m_list.toString();
 	}
+
+//	Required to allow Replacements
+
+    /**
+     * Always store the newest.
+     */
+    public PastContent checkInsert(Id id, PastContent existing) {
+    	return this;
+    }
+
+
+    /**
+     * Value can change
+     */
+    public boolean isMutable() {
+    	return true;
+    }
 
 }
