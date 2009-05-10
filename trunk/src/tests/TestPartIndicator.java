@@ -78,12 +78,12 @@ public class TestPartIndicator extends TestCase {
     	PartIndicator pi = new PartIndicator(expected);
 
     	// Assert Correct Values
-    	assertEquals(TEXT_SHA, pi.getOrigHash());
+    	assertEquals(TEXT_SHA, pi.getLookupId());
     	assertEquals(PART_NUM, pi.getPartNum());
 
     	// Take Two, Create From Bytes using an Existing To Bytes!
     	PartIndicator pi2 = new PartIndicator( pi.toBytes() );
-    	assertEquals(pi.getOrigHash(), pi2.getOrigHash());
+    	assertEquals(pi.getLookupId(), pi2.getLookupId());
     	assertEquals(pi.getPartNum(), pi2.getPartNum());
     	assertEquals(pi, pi2);
 
