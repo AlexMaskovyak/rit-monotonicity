@@ -1,5 +1,7 @@
 package raids;
 
+import java.util.List;
+
 import rice.p2p.commonapi.Application;
 import rice.p2p.commonapi.Endpoint;
 import rice.p2p.commonapi.Id;
@@ -83,8 +85,17 @@ public class StorageApp implements ScribeClient, Application {
 	 * @param size 	Maximum chunk size
 	 * @return		An array of NodeHandles for the nodes that responded or null if it times out
 	 */
-	public NodeHandle[] requestSpace(int num, long size) {
-		ScribeContent myMessage = new StorageRequest(m_endpoint.getLocalNodeHandle(), size);
+	public NodeHandle[] requestSpace(int num, long size, List<NodeHandle> excluded) {
+
+		// Build the message
+		ScribeContent myMessage;
+		if ( excluded == null ) {
+			myMessage = new StorageRequest(m_endpoint.getLocalNodeHandle(), size);
+		} else {
+			myMessage = new StorageRequest(m_endpoint.getLocalNodeHandle(), size, excluded);
+		}
+
+		// Send the Request
 		m_isDone = false;
 		m_response = num;
 		m_nodes = new NodeHandle[num];
