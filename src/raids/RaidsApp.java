@@ -199,7 +199,9 @@ public class RaidsApp implements Application {
     /** Expected parts should come from */
     private List<NodeHandle>[] m_expectedPartOwners;
 
-
+    /** Allows others to know when new requests can be made */
+    private boolean m_readyForNewDownloadRequests;
+    
     /**
      * Basic Constructor that rides on top of the PastImpl Constructor
      * @param node the Pastry Node this wraps
@@ -221,9 +223,13 @@ public class RaidsApp implements Application {
         m_masterList = null;
         m_heartHandler = new HeartHandler(this);
         m_inventory = new HashMap<PartIndicator, MasterListFilePieceInfo>();
+        
+        // set when downloading is to occur
         m_expectedParts = new HashMap<PartIndicator, File>();
+        m_expectedReassembledFileName = null;
         m_expectedPartOwners = null;
-
+        m_readyForNewDownloadRequests = true;
+        
         // Setup an EveReporter
         if ( eveHost == null ) {
             m_reporter = new EveReporter(); // Does nothing
@@ -628,7 +634,16 @@ public class RaidsApp implements Application {
 		return ms.requestSpace(num, size);
     }
 
-
+	/**
+	 * Determines whether the application is currently serving a download 
+	 * request.
+	 * @return True if the app can service a new download request, false
+	 * 		 	otherwise.
+	 */
+	public boolean isReadyForNewDownloadRequests() {
+		return m_expectedParts.isEmpty();
+	}
+	
     /**
      * Whenever Messages pass through this node
      */
@@ -668,6 +683,7 @@ public class RaidsApp implements Application {
      * @param nh the NodeHandle to send this message directly to
      */
     public void sendDownloadMessage(DownloadMessage msg, NodeHandle nh) {
+    	m_readyForNewDownloadRequests = false;
     	final PartIndicator pi = msg.getPartIndicator();
     	m_myapp.getEndpoint().route(null, msg, nh, new DeliveryNotification() {
 
@@ -718,6 +734,7 @@ public class RaidsApp implements Application {
      * @param reassembledFileName the reassembled file's name.
      */
     public void setExpectedReassembledFileName( String reassembledFileName ) {
+    	m_readyForNewDownloadRequests = false;
     	m_expectedReassembledFileName = reassembledFileName;
     }
 
@@ -798,6 +815,8 @@ public class RaidsApp implements Application {
      */
     private void allPartsDownloaded() {
 
+    	m_readyForNewDownloadRequests = true;
+    	
     	// Count missing files, ones that couldn't be downloaded because no-one had them
     	int missingFiles = 0;
     	for (PartIndicator pi : m_expectedParts.keySet()) {
@@ -874,6 +893,10 @@ public class RaidsApp implements Application {
     	debug( String.format(
     			"DOWNLOAD, REASSEMBLY AND VERIFICATION COMPLETE FOR: '%s'",
     			reassembledFile.getAbsolutePath() ) );
+    	
+    	m_expectedReassembledFileName = null;
+    	m_expectedParts.clear();
+    	
     }
 
 
