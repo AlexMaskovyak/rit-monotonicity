@@ -393,7 +393,7 @@ public class RaidsApp implements Application {
      */
     public MasterListMessage updateMasterList(final Id fileId, List<NodeHandle>[] list) {
     	MasterListMessage mlm = new MasterListMessage(fileId, list);
-    	m_past.reInsert(fileId, new Continuation<Boolean[], Exception>() {
+    	m_past.insert(mlm, new Continuation<Boolean[], Exception>() {
             public void receiveException(Exception e) { e.printStackTrace(); }
             public void receiveResult(Boolean[] res) {
                 Boolean[] results = ((Boolean[]) res);
