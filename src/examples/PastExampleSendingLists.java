@@ -133,9 +133,9 @@ public class PastExampleSendingLists {
 		// FAKE Personal File List for that user
 		PersonalFileListContent pfl = new PersonalFileListContent(fakeStorageId);
 		List<PersonalFileInfo> l = pfl.getList();
-		l.add( new PersonalFileInfo("one.txt") );
-		l.add( new PersonalFileInfo("two.txt") );
-		l.add( new PersonalFileInfo("three.txt") );
+		l.add( new PersonalFileInfo("one.txt", "8D854AA57B2117CD4C58E839430CB35317E21861") );
+		l.add( new PersonalFileInfo("two.txt", "CA4F0BB01E5A62471AF3B936ABCBAF41CD0A82EA") );
+		l.add( new PersonalFileInfo("three.txt", "6E86029DC19B0B4C8189F7A2C5C368447499F1D7") );
 
 
 		// FAKE Store on a random node
