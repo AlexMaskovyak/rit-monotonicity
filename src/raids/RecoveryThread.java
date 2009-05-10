@@ -37,7 +37,7 @@ public class RecoveryThread extends Thread {
 	public void run() {
 
 		// Values we need
-		String hash = m_part.getOrigHash();
+		String hash = m_part.getLookupId();
 		NodeHandle me = m_delegate.getNode().getLocalNodeHandle();
 		Environment env = m_delegate.getNode().getEnvironment();
 		int partNum = m_part.getPartNum();
