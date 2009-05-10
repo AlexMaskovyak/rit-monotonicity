@@ -37,9 +37,7 @@ public class EveReporter {
 			m_socket = new Socket(host, port);
 			m_out = new ObjectOutputStream( m_socket.getOutputStream() );
 			m_connected = true;
-		} catch (Exception e) {
-			System.err.println("Could Not Connect to Eve.");
-		}
+		} catch (Exception e) {}
 	}
 
 
@@ -62,6 +60,7 @@ public class EveReporter {
 			} catch (IOException e) {}
 		}
 	}
+
 
 	/**
 	 * Close the connection to Eve

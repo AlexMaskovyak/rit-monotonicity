@@ -79,6 +79,11 @@ public class Client {
 		// loop to construct the nodes/apps
 		for (int curNode = 0; curNode < n; curNode++) {
 
+			// Username of this node.
+			// If the number of nodes is 1 then just use that raw username
+			// otherwise do name0, name1, name2, ... name(n-1)
+			String perNodeUsername = (n==1) ? username : username+curNode;
+
 			// construct a node, passing the null boothandle on the first loop will
 			// cause the node to start its own ring
 			PastryNode node = factory.newNode();
@@ -109,7 +114,6 @@ public class Client {
 			// create the persistent part
 			// Storage stor = new PersistentStorage(idf, storageDirectory, 4 * 1024 * 1024, node.getEnvironment());
 			Storage stor = new MemoryStorage(idf);
-			String perNodeUsername = username+curNode;
 			RaidsApp app = new RaidsApp(node, new StorageManagerImpl(idf, stor,
 					new LRUCache(new MemoryStorage(idf), 512 * 1024, node.getEnvironment())), 1, "",
 					perNodeUsername, m_config.getProperty("EVE_HOST", null),
@@ -150,27 +154,13 @@ public class Client {
 			String username = args[3];
 			int numNodes = Integer.parseInt(args[4]);
 
-			// Optional Configuration File
-			Properties config = new Properties();
-			/*
-			if ( args.length >= 5 ) {
-				File configFile = new File(args[4]);
-				if ( configFile.exists() ) {
-					config.load( new FileInputStream(configFile) );
-				} else {
-					System.err.println("WARNING: Config File did not exist: " + args[4]);
-				}
-			} else {
-				System.err.println("WARNING: No Config File Given");
-			}
-			*/
-
 			// Optional Eve host and Port overrides
+			Properties config = new Properties();
 			if ( args.length > 5 ) {
 				config.setProperty("EVE_HOST", args[5]);
 				config.setProperty("EVE_PORT", args[6]);
 			} else {
-				//config.setProperty("EVE_HOST", "");
+				// EVE_HOST should be null
 				config.setProperty("EVE_PORT", "0");
 			}
 
@@ -199,7 +189,6 @@ public class Client {
 		System.out.println("  bootPort   = bootstrap node's port");
 		System.out.println("  username   = the Client's username");
 		System.out.println("  numNodes   = number of nodes to create on this JVM");
-		//System.out.println("  pathToCfgFile = optional properties file");
 		System.out.println("  eve_host = optional override EVE_HOST property");
 		System.out.println("  eve_port = optional override EVE_PORT property");
 		System.exit(1);
