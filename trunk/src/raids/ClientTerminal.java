@@ -129,7 +129,7 @@ public class ClientTerminal extends Thread {
 				// Upload Command
 				else if ( line.startsWith(UPLOAD)) {
 					line = line.replaceFirst(UPLOAD, "").trim();
-					uploadCommand(line);
+					uploadCommand(line, 4);
 				}
 
 				// Download Command
@@ -278,6 +278,7 @@ public class ClientTerminal extends Thread {
 		}
 	}
 
+
 	/**
 	 * Process a file Upload Command.
 	 * usage: upload <filepath> <chunks>
@@ -285,7 +286,14 @@ public class ClientTerminal extends Thread {
 	 * it to the network.
 	 * @param line Line stripped of command hook.
 	 */
-	private void uploadCommand(String line) {
+	private void uploadCommand(String line, int attempts) {
+
+		// Stop trying to upload
+		if (attempts <= 0) {
+			System.err.println("Upload Command failed after too many attempts.");
+			return;
+		}
+
 		try {
 
 			// obtain arguments
@@ -304,6 +312,13 @@ public class ClientTerminal extends Thread {
 			// find nodes with storage
 			int replicas = 2; // TODO: Make this an optional parameter for upload?
 			NodeHandle[] storageNodes = m_app.requestSpace( chunks*(replicas), cfi.getMaxChunkSize() );
+
+			// Handle a Failed Multicast
+			if ( storageNodes == null ) {
+				System.err.println("Storage Request Failed.  Trying again... " + (attempts-1) + " tries left.");
+				uploadCommand(line, attempts-1);
+				return;
+			}
 
 			// Debug
 			System.out.println("Replication Factor: " + replicas);
