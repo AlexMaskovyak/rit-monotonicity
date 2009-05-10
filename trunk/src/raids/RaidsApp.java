@@ -195,7 +195,7 @@ public class RaidsApp implements Application {
 
     /** Expected reassembled file name after downloading all pieces */
     private String m_expectedReassembledFileName;
-    
+
     /** Expected parts should come from */
     private List<NodeHandle>[] m_expectedPartOwners;
 
@@ -493,9 +493,16 @@ public class RaidsApp implements Application {
 
         // Self Reminder Message - Send Heartbeat Thumps
         else if ( msg instanceof SelfReminder ) {
-	    	for (NodeHandle nh : m_heartHandler.getSendingList()) {
+	    	for (final NodeHandle nh : m_heartHandler.getSendingList()) {
 	    		// debug("sending heartbeat to " + nh.getId().toStringFull());
-	    		routeMessageDirect(new HeartbeatMessage(m_node.getLocalNodeHandle()), nh);
+	    		HeartbeatMessage hb = new HeartbeatMessage(m_node.getLocalNodeHandle());
+	    		m_myapp.getEndpoint().route(null, hb, nh, new DeliveryNotification() {
+	    			public void sent(MessageReceipt receipt) {}
+					public void sendFailed(MessageReceipt receipt, Exception e) {
+						debug("TOTALLY TIMED OUT A HEARTBEAT WE SENT TO: " + nh.getId().toStringFull());
+						m_heartHandler.stopSendingHeartbeatsTo(nh);
+					}
+	    		});
 			}
         }
 
@@ -814,7 +821,7 @@ public class RaidsApp implements Application {
     	String[] fileChunks = new String[ numberOfChunks ];
     	String iPath = null;
     	String outPath = System.getProperty("user.home") + File.separatorChar;
-    	
+
     	Set<Entry<PartIndicator, File>> partsAndFiles = m_expectedParts.entrySet();
     	for( Entry<PartIndicator, File> entry : partsAndFiles ) {
     		PartIndicator pi = entry.getKey();
@@ -831,13 +838,13 @@ public class RaidsApp implements Application {
     	}
 
     	Chunker.reassemble(
-    			iPath, 
-    			fileChunks, 
-    			outPath, 
+    			iPath,
+    			fileChunks,
+    			outPath,
     			m_expectedReassembledFileName );
 
     	debug( String.format(
-    			"FINISHED ASSEMBLING FILE TO '%s'.", 
+    			"FINISHED ASSEMBLING FILE TO '%s'.",
     			outPath + m_expectedReassembledFileName ) );
 
     	// Verify existence after assembly
@@ -846,26 +853,26 @@ public class RaidsApp implements Application {
     		debug( "REASSEMBLED FILE DOESN'T EXIST!  ERROR OCCURRED SOMEWHERE!");
     		return;
     	}
-    	
+
     	// Verify hash after assembly
-    	String originalHash = m_personalFileList.get( 
-    			m_personalFileList.indexOf( 
-    					new PersonalFileInfo( 
-    							m_expectedReassembledFileName, 
+    	String originalHash = m_personalFileList.get(
+    			m_personalFileList.indexOf(
+    					new PersonalFileInfo(
+    							m_expectedReassembledFileName,
     							null ) ) ).getHash();
-    	
+
     	String reassembledHash = SHA1.getInstance().hash( reassembledFile );
-    	
+
     	debug( String.format(
     			"Original hash: '%s' new hash: '%s'\n", originalHash, reassembledHash ) );
-    	
+
     	if( !reassembledHash.equals( originalHash ) ) {
     		debug( "REASSEMBLED FILE'S HASH IS INCORRECT!  RECOMMENDATION: ATTEMPT REDOWNLOAD" );
     		return;
     	}
-    	
+
     	debug( String.format(
-    			"DOWNLOAD, REASSEMBLY AND VERIFICATION COMPLETE FOR: '%s'", 
+    			"DOWNLOAD, REASSEMBLY AND VERIFICATION COMPLETE FOR: '%s'",
     			reassembledFile.getAbsolutePath() ) );
     }
 
