@@ -101,7 +101,7 @@ public class RecoveryThread extends Thread {
 		if ( file == null ) {
 			System.out.println(">>> We don't even have the file... HANDLE THIS LATER.");
 		} else {
-			ByteBuffer buf = BufferUtils.getBufferForFile(file.getAbsolutePath(), size, m_part);
+			ByteBuffer buf = BufferUtils.getBufferForFile(file.getAbsolutePath(), size+PartIndicator.SIZE, m_part);
 			buf.flip();
 			m_delegate.sendBufferToNode(buf, choosen);
 			System.out.println(">>> Sent the File Data to " + choosen.getId().toStringFull());
