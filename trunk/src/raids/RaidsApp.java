@@ -45,7 +45,7 @@ public class RaidsApp implements Application {
 	 */
 	private class SelfReminder implements Message {
 		public int getPriority() {
-			return 0;
+			return DEFAULT_PRIORITY;
 		}
 	}
 
@@ -790,6 +790,8 @@ public class RaidsApp implements Application {
 
     	// All Good
     	System.out.println("ENOUGH PARTS SUCCESSFULLY DOWNLOADED!!!!");
+    	// TODO: Verify the file.
+    	// TODO: Reassemble the file.
 
     }
 

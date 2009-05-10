@@ -25,7 +25,7 @@ public class HeartbeatMessage implements Message {
 	 * Default Priority
 	 */
 	public int getPriority() {
-		return 0;
+		return DEFAULT_PRIORITY;
 	}
 
 
