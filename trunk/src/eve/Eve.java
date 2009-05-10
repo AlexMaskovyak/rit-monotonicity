@@ -45,7 +45,6 @@ public class Eve extends Thread {
 
 	    /**
 	     * Listen and print incoming messages
-	     * TODO: Add Synchronization on Sys.out() ?
 	     */
 	    public void run() {
 	    	try {
@@ -56,48 +55,50 @@ public class Eve extends Thread {
 		    	// Continually read EveMessages and output them
 		    	EveMessage msg = null;
 		    	while ( (msg = (EveMessage) in.readObject()) != null ) {
+		    		synchronized (m_graph) {
 
-		    		// Debug
-		    		System.out.println(msg);
+		    			// Debug
+		    			System.out.println(msg);
 
-		    		// Register Message (from name, data is their id)
-		    		if ( msg.getType() == EveType.REGISTER ) {
-		    			String name = msg.getFrom();
-		    			String idString = msg.getData();
-		    			m_graph.addVertex(name);
-		    			synchronized (m_idLookup) {
-							m_idLookup.put(idString, name);
-						}
-		    		}
+		    			// Register Message (from name, data is their id)
+		    			if ( msg.getType() == EveType.REGISTER ) {
+		    				String name = msg.getFrom();
+		    				String idString = msg.getData();
+		    				m_graph.addVertex(name);
+		    				synchronized (m_idLookup) {
+		    					m_idLookup.put(idString, name);
+		    				}
+		    			}
 
-		    		// Forward Message (from name, to id)
-		    		else if ( msg.getType() == EveType.FORWARD ) {
-		    			String from = msg.getFrom();
-			    		String to = m_idLookup.get( msg.getTo() );
-			    		m_graph.addEdge(from, to);
-		    		}
+		    			// Forward Message (from name, to id)
+		    			else if ( msg.getType() == EveType.FORWARD ) {
+		    				String from = msg.getFrom();
+		    				String to = m_idLookup.get( msg.getTo() );
+		    				m_graph.addEdge(from, to);
+		    			}
 
-		    		// Debug Message
-		    		else if ( msg.getType() == EveType.DEBUG ){
-		    			String from = msg.getFrom();
-		    			String to = msg.getTo();
-		    			m_graph.addVertex(from);
-		    			m_graph.addVertex(to);
-		    			m_graph.addEdge(from, to);
-		    		}
+		    			// Debug Message
+		    			else if ( msg.getType() == EveType.DEBUG ){
+		    				String from = msg.getFrom();
+		    				String to = msg.getTo();
+		    				m_graph.addVertex(from);
+		    				m_graph.addVertex(to);
+		    				m_graph.addEdge(from, to);
+		    			}
 
-		    		// Default Message (from id, to id)
-		    		else {
-			    		String from = m_idLookup.get( msg.getFrom() );
-			    		String to = m_idLookup.get( msg.getTo() );
-			    		m_graph.addVertex(from);
-			    		if ( to != null ) {
-			    			m_graph.addVertex(to);
-			    			m_graph.addEdge(from, to);
-			    		}
+		    			// Default Message (from id, to id)
+		    			else {
+		    				String from = m_idLookup.get( msg.getFrom() );
+		    				String to = m_idLookup.get( msg.getTo() );
+		    				m_graph.addVertex(from);
+		    				if ( to != null ) {
+		    					m_graph.addVertex(to);
+		    					m_graph.addEdge(from, to);
+		    				}
+		    			}
 
-		    		}
-		    	}
+		    		} // synchronized
+		    	} // while
 
 			} catch (Exception e) {}
 	    }
