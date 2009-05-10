@@ -92,11 +92,14 @@ public class Chunker {
 	 * @param fileChunks	Input file names
 	 * @param oPath			Output file path
 	 * @param outputFile	Output file name
+	 * @throws IllegalArgumentException when more than one of the specified filechunks cannot be found.
 	 */
 	public static void reassemble(String iPath, String[] fileChunks, String oPath,
-			String outputFile) {
+			String outputFile) throws IllegalArgumentException {
 
 		try{
+			int filesNotFound = 0;
+			
 			int m = fileChunks.length;
 			int block[] = new int[m];
 			int pData = 0;
@@ -112,6 +115,10 @@ public class Chunker {
 				}catch( FileNotFoundException e ){
 					fis[i] = null;
 					regenerate = i;
+					filesNotFound++;
+					if( filesNotFound > 1 ) {
+						throw new IllegalArgumentException("Must have all specified fileChunks for reassembly.");
+					}
 				}
 			}
 
