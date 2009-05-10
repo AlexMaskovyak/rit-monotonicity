@@ -1,9 +1,8 @@
 package raids;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -69,8 +68,8 @@ public class HeartHandler {
 	/** Listening Heartbeat Timers */
 	private Map<Id, Timer> m_hearts;
 
-	/** List of Nodes to send a Heartbeat thump to */
-	private List<NodeHandle> m_sendingThumpsTo;
+	/** List of Nodes to send a Heartbeat thump to, and for how many parts */
+	private Map<NodeHandle, Integer> m_sendingThumpsTo;
 
 	/** The Application to delegate to when a Node Failure is detected */
 	private RaidsApp m_app;
@@ -83,7 +82,7 @@ public class HeartHandler {
 	public HeartHandler(RaidsApp app) {
 		m_app = app;
 		m_hearts = new HashMap<Id, Timer>();
-		m_sendingThumpsTo = new ArrayList<NodeHandle>();
+		m_sendingThumpsTo = new HashMap<NodeHandle, Integer>();
 	}
 
 
@@ -91,22 +90,37 @@ public class HeartHandler {
 
 	/**
 	 * Send Heartbeats to a Node
+	 * Increment the Weight for that node
 	 * @param nh the node to start sending thumps to
 	 */
 	public void sendHeartbeatsTo(NodeHandle nh) {
 		synchronized (m_sendingThumpsTo) {
-			m_sendingThumpsTo.add(nh);
+			if ( m_sendingThumpsTo.containsKey(nh) ) {
+				Integer cnt = m_sendingThumpsTo.get(nh);
+				m_sendingThumpsTo.put(nh, ++cnt);
+			} else {
+				m_sendingThumpsTo.put(nh, Integer.valueOf(1));
+			}
 		}
 	}
 
 
 	/**
 	 * Stop Sending Heartbeats to a Node
+	 * Decrement the weight for that node
 	 * @param nh the node to stop sending thumps to
 	 */
 	public void stopSendingHeartbeatsTo(NodeHandle nh) {
 		synchronized (m_sendingThumpsTo) {
-			m_sendingThumpsTo.remove(nh);
+			if ( m_sendingThumpsTo.containsKey(nh) ) {
+				Integer cnt = m_sendingThumpsTo.get(nh);
+				if ( cnt == 1 ) {
+					m_sendingThumpsTo.remove(nh);
+				} else {
+					m_sendingThumpsTo.put(nh, --cnt);
+				}
+			}
+
 		}
 	}
 
@@ -156,8 +170,8 @@ public class HeartHandler {
 	 * Access the list of Nodes this is sending thumps to.
 	 * @return the list of NodeHandles we are sending Heartbeats to
 	 */
-	public List<NodeHandle> getSendingList() {
-		return m_sendingThumpsTo;
+	public Set<NodeHandle> getSendingList() {
+		return m_sendingThumpsTo.keySet();
 	}
 
 
