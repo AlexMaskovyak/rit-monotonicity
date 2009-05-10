@@ -805,6 +805,7 @@ public class RaidsApp implements Application {
 		System.out.println("Username: " + m_username);
 		System.out.println("ID: " + m_node.getId().toStringFull());
 		System.out.println("Personal File List: " + m_personalFileList);
+		System.out.println("Inventory: " + m_inventory.keySet());
     }
 
 
