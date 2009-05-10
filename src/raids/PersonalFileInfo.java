@@ -4,18 +4,23 @@ import java.io.Serializable;
 
 /**
  * Data Structure representing a File a User has uploaded
+ * @author Kevin Cheek
+ * @author Alex Maskovyak
+ * @author Joe Pecoraro
  */
 public class PersonalFileInfo implements Serializable {
 
 	/** File Name */
 	private String m_name;
-
+	private String m_hash;
+	
 	/**
 	 * Create a Personal File with a given name
 	 * @param name the file name
 	 */
-	public PersonalFileInfo(String name) {
+	public PersonalFileInfo(String name, String hash) {
 		m_name = name;
+		m_hash = hash;
 	}
 
 	/**
@@ -30,10 +35,26 @@ public class PersonalFileInfo implements Serializable {
 	 * Modify the file name
 	 * @param name the new file name
 	 */
-	public void setName(String name) {
+	public void setName( String name ) {
 		m_name = name;
 	}
 
+	/**
+	 * Access the file's hash
+	 * @return Hash of the file's contents when this structure was created.
+	 */
+	public String getHash() {
+		return m_hash;
+	}
+	
+	/**
+	 * Modify the file's hash
+	 * @param hash Hash of the file's contents.
+	 */
+	public void setHash( String hash ) {
+		m_hash = hash;
+	}
+	
 	/**
 	 * For Debugging
 	 * @return a string representation of this object

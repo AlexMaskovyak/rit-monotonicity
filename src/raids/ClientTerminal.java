@@ -11,6 +11,7 @@ import java.util.Vector;
 import rice.environment.Environment;
 import rice.p2p.commonapi.NodeHandle;
 import util.BufferUtils;
+import util.SHA1;
 import chunker.ChunkedFileInfo;
 
 /**
@@ -244,8 +245,11 @@ public class ClientTerminal extends Thread {
 
 			// Check personal file list to ensure the file has been uploaded before
 			List<PersonalFileInfo> fileList = m_app.getPersonalFileList();
-			if ( !fileList.contains( new PersonalFileInfo(filename) ) ) {
-				System.err.println("This User has never stored a file named (" + filename + ").");
+			if ( !fileList.contains( 
+					new PersonalFileInfo(
+							filename, 
+							null ) ) ) {
+				System.err.printf("This User has never stored a file named '%s'\n", filename );
 				return;
 			}
 
@@ -263,6 +267,7 @@ public class ClientTerminal extends Thread {
 
 			// Tell the App we are expecting these files
 			String lookupIdString = mlm.getLookupId().toStringFull();
+			m_app.setExpectedReassembledFileName( filename );
 			m_app.setExpectedParts(lookupIdString, mlm.getParts().length, parts);
 
 			// Send a Download message to the first node in the list containing a file
@@ -349,7 +354,9 @@ public class ClientTerminal extends Thread {
 
 			// Update the PersonalFileList in the DHT
 			List<PersonalFileInfo> list = m_app.getPersonalFileList();
-			list.add( new PersonalFileInfo(fileName) );
+			list.add( new PersonalFileInfo(fileName, SHA1.getInstance().hash( new File( path ) ) ) );
+			
+			System.out.println( "SHA HASH: " + SHA1.getInstance().hash( new File( path ) ) ) ;
 			m_app.updatePersonalFileList(list);
 
 			// Send the MasterListMessage to Everyone
