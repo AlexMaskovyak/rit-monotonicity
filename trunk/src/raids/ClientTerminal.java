@@ -354,7 +354,7 @@ public class ClientTerminal extends Thread {
 
 			// Update the PersonalFileList in the DHT
 			List<PersonalFileInfo> list = m_app.getPersonalFileList();
-			list.add( new PersonalFileInfo(fileName, SHA1.getInstance().hash( new File( path ) ) ) );
+			list.add( new PersonalFileInfo(fileName, cfi.getOriginalFileHash() ) );
 			
 			System.out.println( "SHA HASH: " + SHA1.getInstance().hash( new File( path ) ) ) ;
 			m_app.updatePersonalFileList(list);
