@@ -15,6 +15,15 @@ public class GeneralIdHelper {
 
 
 	/**
+	 * Most Basic, Convert a String to an ID
+	 */
+	public static Id idFromString(String str, Environment env) {
+		PastryIdFactory localFactory = new PastryIdFactory(env);
+		return localFactory.buildIdFromToString(str);
+	}
+
+
+	/**
 	 * Generate the Master List PastryId (the key for the DHT) for a given file name
 	 * @param filename the filename
 	 * @param username the username is prepended to the file to make it unique per user
