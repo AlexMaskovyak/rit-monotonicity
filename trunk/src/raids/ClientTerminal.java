@@ -240,6 +240,11 @@ public class ClientTerminal extends Thread {
 				System.err.println("Bad download command.  Usage: download <filename>");
 			}
 
+			if( !m_app.isReadyForNewDownloadRequests() ) {
+				System.err.println("Currently servicing a download request.  Please wait until the current download request finishes.");
+				return;
+			}
+			
 			// The Filename
 			String filename = args[0];
 
@@ -268,7 +273,7 @@ public class ClientTerminal extends Thread {
 			// Tell the App we are expecting these files
 			String lookupIdString = mlm.getLookupId().toStringFull();
 			m_app.setExpectedReassembledFileName( filename );
-			m_app.setExpectedParts(lookupIdString, mlm.getParts().length, parts);
+			m_app.setExpectedParts(lookupIdString, mlm.getParts().length, parts );
 
 			// Send a Download message to the first node in the list containing a file
 			for (int i = 0; i < parts.length; i++) {
@@ -279,6 +284,7 @@ public class ClientTerminal extends Thread {
 			}
 
 		} catch (Exception e) {
+			e.printStackTrace();
 			System.err.println("Bad download command.  Usage: download <filename>");
 		}
 	}
