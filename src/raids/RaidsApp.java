@@ -744,7 +744,12 @@ public class RaidsApp implements Application {
      * @param parts the number of parts to expect
      */
     public void setExpectedParts(String fileId, int parts, List<NodeHandle>[] owners) {
-    	m_expectedPartOwners = owners;
+    	// copy of owners so that we can remove without incident
+    	m_expectedPartOwners = new ArrayList[ owners.length ];    	
+    	for( int i = 0; i < owners.length; ++i ) {
+    		m_expectedPartOwners[ i ] = new ArrayList( owners[ i ] );
+    	}
+
     	for (int i = 0; i < parts; i++) {
     		PartIndicator pi = new PartIndicator(fileId, i);
     		debug("Expecting: " + pi);
@@ -757,7 +762,6 @@ public class RaidsApp implements Application {
      * @param reassembledFileName the reassembled file's name.
      */
     public void setExpectedReassembledFileName( String reassembledFileName ) {
-    	m_readyForNewDownloadRequests = false;
     	m_expectedReassembledFileName = reassembledFileName;
     }
 
