@@ -20,7 +20,7 @@ public class PartIndicator implements Serializable {
 //	Fields
 
 	/** Original File Hash */
-	private String m_origHash;
+	private String m_lookupId;
 
 	/** The Part Number */
 	private int m_partNum;
@@ -28,11 +28,11 @@ public class PartIndicator implements Serializable {
 
 	/**
 	 * Basic Constructor
-	 * @param origHash the original file's hash
+	 * @param lookupId the original file's lookup id
 	 * @param partNum just a part of that file
 	 */
-	public PartIndicator(String origHash, int partNum) {
-		m_origHash = origHash;
+	public PartIndicator(String lookupId, int partNum) {
+		m_lookupId = lookupId;
 		m_partNum = partNum;
 	}
 
@@ -46,7 +46,7 @@ public class PartIndicator implements Serializable {
 		buf.position(0);
 		byte[] sha1_hash = new byte[40];
 		buf.get(sha1_hash);
-		m_origHash = new String( sha1_hash );
+		m_lookupId = new String( sha1_hash );
 		m_partNum = buf.getInt();
 	}
 
@@ -57,7 +57,7 @@ public class PartIndicator implements Serializable {
 	 */
 	public byte[] toBytes() {
 		ByteBuffer buf = ByteBuffer.allocate(SIZE);
-		buf.put( m_origHash.getBytes() );
+		buf.put( m_lookupId.getBytes() );
 		buf.putInt(m_partNum);
 		return buf.array();
 	}
@@ -70,7 +70,7 @@ public class PartIndicator implements Serializable {
 	public boolean equals(Object other) {
 		if ( other instanceof PartIndicator ) {
 			PartIndicator pi = (PartIndicator) other;
-			return ( m_partNum == pi.getPartNum() ) && ( m_origHash.equals(pi.getOrigHash()) );
+			return ( m_partNum == pi.getPartNum() ) && ( m_lookupId.equals(pi.getLookupId()) );
 		}
 		return false;
 	}
@@ -83,7 +83,7 @@ public class PartIndicator implements Serializable {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((m_origHash == null) ? 0 : m_origHash.hashCode());
+		result = prime * result + ((m_lookupId == null) ? 0 : m_lookupId.hashCode());
 		result = prime * result + m_partNum;
 		return result;
 	}
@@ -94,18 +94,18 @@ public class PartIndicator implements Serializable {
 	 * @return a String representation of this object
 	 */
 	public String toString() {
-		return m_origHash + ":" + m_partNum;
+		return m_lookupId + ":" + m_partNum;
 	}
 
 
 // Getters and Setters
 
-	public String getOrigHash() {
-		return m_origHash;
+	public String getLookupId() {
+		return m_lookupId;
 	}
 
-	public void setOrigHash(String origHash) {
-		m_origHash = origHash;
+	public void setLookupId(String origHash) {
+		m_lookupId = origHash;
 	}
 
 	public int getPartNum() {
