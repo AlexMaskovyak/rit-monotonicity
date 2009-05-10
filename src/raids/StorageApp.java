@@ -114,7 +114,7 @@ public class StorageApp implements ScribeClient, Application {
 	/**
 	 * This method is called when the node receives a direct message. If the message
 	 * received is a response to a storage request then add the node handle to a list of nodes
-	 * if enough of the nodes have responded ignore futher responses.
+	 * if enough of the nodes have responded ignore further responses.
 	 *
 	 * @param id		The message id.
 	 * @param message 	The message content.
