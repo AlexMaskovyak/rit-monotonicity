@@ -250,9 +250,9 @@ public class ClientTerminal extends Thread {
 
 			// Check personal file list to ensure the file has been uploaded before
 			List<PersonalFileInfo> fileList = m_app.getPersonalFileList();
-			if ( !fileList.contains( 
+			if ( !fileList.contains(
 					new PersonalFileInfo(
-							filename, 
+							filename,
 							null ) ) ) {
 				System.err.printf("This User has never stored a file named '%s'\n", filename );
 				return;
@@ -321,8 +321,8 @@ public class ClientTerminal extends Thread {
 			final ChunkedFileInfo cfi = chunker.Chunker.chunk( filePath, fileName, chunks);
 
 			// find nodes with storage
-			int replicas = 2; // TODO: Make this an optional parameter for upload?
-			NodeHandle[] storageNodes = m_app.requestSpace( chunks*(replicas), cfi.getMaxChunkSize() );
+			int replicas = 3; // TODO: Make this an optional parameter for upload?
+			NodeHandle[] storageNodes = m_app.requestSpace( chunks*(replicas), cfi.getMaxChunkSize(), null );
 
 			// Handle a Failed Multicast
 			if ( storageNodes == null ) {
@@ -361,7 +361,7 @@ public class ClientTerminal extends Thread {
 			// Update the PersonalFileList in the DHT
 			List<PersonalFileInfo> list = m_app.getPersonalFileList();
 			list.add( new PersonalFileInfo(fileName, cfi.getOriginalFileHash() ) );
-			
+
 			System.out.println( "SHA HASH: " + SHA1.getInstance().hash( new File( path ) ) ) ;
 			m_app.updatePersonalFileList(list);
 

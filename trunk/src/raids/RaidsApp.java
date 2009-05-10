@@ -137,6 +137,14 @@ public class RaidsApp implements Application {
 			return m_last;
 		}
 
+		public void setPrevNode(NodeHandle prev) {
+			m_prev = prev;
+		}
+
+		public void setNextNode(NodeHandle next) {
+			m_next = next;
+		}
+
 		public void setLocalPath(String path) {
 			m_localPath = path;
 		}
@@ -351,7 +359,7 @@ public class RaidsApp implements Application {
         });
 
         // Busy Wait to force this to be synchronous
-        synchronized (m_node) {
+        synchronized (this) {
             while ( !m_isDone ) {
             	try {
             		this.wait(500);
@@ -483,6 +491,17 @@ public class RaidsApp implements Application {
         if ( m_dead ) {
             debug("I'm dead and received: " + msg);
             return;
+        }
+
+        // Recover Message
+        if ( msg instanceof RecoverMessage ) {
+        	debug("received recover message");
+        	RecoverMessage recoverMessage = (RecoverMessage)msg;
+        	PartIndicator pi = recoverMessage.getPart();
+        	MasterListFilePieceInfo mlfpi = m_inventory.get(pi);
+        	mlfpi.setNextNode( recoverMessage.getNewNext() );
+        	m_heartHandler.sendHeartbeatsTo( recoverMessage.getNewNext() );
+        	return;
         }
 
         // Heartbeat message - Reset Timer for whoever sent
@@ -630,8 +649,8 @@ public class RaidsApp implements Application {
 	 * @return NodeHandles which have responded positively to our storage
 	 * 			request/master request.
 	 */
-	public NodeHandle[] requestSpace(int num, long size){
-		return ms.requestSpace(num, size);
+	public NodeHandle[] requestSpace(int num, long size, List<NodeHandle> excluded){
+		return ms.requestSpace(num, size, excluded);
     }
 
 	/**
@@ -663,7 +682,7 @@ public class RaidsApp implements Application {
     }
 
 
-// Public Methods
+//	Send Messages
 
     /**
      * Send a Message through MyApp
@@ -705,6 +724,8 @@ public class RaidsApp implements Application {
     }
 
 
+//	Send Files
+
     /**
      * Send a Buffer through MyApp, uses AppSockets
      * @param buf the buffer of data
@@ -714,6 +735,8 @@ public class RaidsApp implements Application {
     	m_myapp.sendBufferToNode(buf, nh);
     }
 
+
+//	Download Files
 
     /**
      * Expecting incoming parts.
@@ -900,6 +923,57 @@ public class RaidsApp implements Application {
     }
 
 
+//	Node Death
+
+    /**
+     * Handle a Node's death, by spawning the proper
+     * Recovery Threads if that was the node we were
+     * watching (previous).
+     * @param dead the Node that died
+     */
+    public void handleNodeDeath(NodeHandle dead) {
+    	synchronized (m_inventory) {
+        	for (PartIndicator pi : m_inventory.keySet()) {
+    			MasterListFilePieceInfo mlfpi = m_inventory.get(pi);
+    			if ( mlfpi.getPrevNode().equals(dead) ) {
+    				mlfpi.setPrevNode(null); // clear the value, it will be reset later
+    				m_inventory.put(pi, mlfpi);
+    				new RecoveryThread(this, pi, dead).start();
+    			}
+    		}
+		}
+    }
+
+
+    /**
+     * Update Previous Node for Part
+     * @param prev the new previous node due to a recovery
+     * @param pi the part indicator
+     */
+    public void setPreviousNodeForPart(NodeHandle prev, PartIndicator pi) {
+    	synchronized (m_inventory) {
+    		MasterListFilePieceInfo mlfpi = m_inventory.get(pi);
+    		mlfpi.setPrevNode(prev);
+    		m_inventory.put(pi, mlfpi);
+		}
+    }
+
+
+//	Public Methods
+
+    /**
+     * Grab the local file given a PartIndicator
+     * @param pi the part indicator
+     * @return the file stored for that part, null if not found
+     */
+    public File lookupInInventory(PartIndicator pi) {
+    	synchronized (m_inventory) {
+    		MasterListFilePieceInfo mlfpi = m_inventory.get(pi);
+    		return (mlfpi == null || mlfpi.getLocalPath() == null) ? null : new File(mlfpi.getLocalPath());
+		}
+    }
+
+
     /**
      * Status information on this node.
      */
@@ -953,6 +1027,7 @@ public class RaidsApp implements Application {
     public void setPersonalFileList(List<PersonalFileInfo> personalFileList) {
         m_personalFileList = personalFileList;
     }
+
 
 
 // Debug

@@ -35,16 +35,18 @@ public class HeartHandler {
 
 		/**
 		 * Handle the missed Heartbeat
-		 * TODO: Fault Tolerance requirement: duplicate part on a new node...
 		 */
 		public void run() {
+
+			// Debug
 			debug("Missed our heartbeat for: " + m_nodeHandle.getId().toStringFull() );
 			debug("Stopping Sending our thumps to it");
 			synchronized (m_sendingThumpsTo) {
 				m_sendingThumpsTo.remove( m_nodeHandle );
 			}
 
-			// TODO: Delegate to m_app
+			// Delegate the rest of the process to the RaidsApp
+			m_app.handleNodeDeath(m_nodeHandle);
 
 		}
 
@@ -54,7 +56,7 @@ public class HeartHandler {
 //	Constants
 
 	/** Check Heartbeat Time */
-	public static final int CHECK_HEARTBEAT = 20000; /* 20 seconds */
+	public static final int CHECK_HEARTBEAT = 10000; /* 20 seconds */
 
 	/** Send Heartbeat Thump Time */
 	public static final int SEND_HEARTBEAT = 5000; /* 5 seconds */

@@ -1,10 +1,13 @@
 package raids;
 
+import java.io.File;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import rice.environment.Environment;
 import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.NodeHandle;
+import util.BufferUtils;
 
 public class RecoveryThread extends Thread {
 
@@ -42,7 +45,7 @@ public class RecoveryThread extends Thread {
 		Environment env = m_delegate.getNode().getEnvironment();
 		int partNum = m_part.getPartNum();
 
-		// TODO: Fetch the DHT list
+		// Fetch the DHT list
 		Id lookupId = GeneralIdHelper.idFromString(hash, env);
 		MasterListMessage mlm = m_delegate.lookupMasterList(lookupId);
 		System.out.println(">>> Looked up the MasterList");
@@ -50,27 +53,58 @@ public class RecoveryThread extends Thread {
 
 		// More Values
 		List<NodeHandle>[] newParts = mlm.getParts();
+		List<NodeHandle> oldPartList = newParts[partNum];
 		NodeHandle prevNode = getPreviousToDeadNode( newParts[partNum] );
+		File file = m_delegate.lookupInInventory(m_part);
+		System.out.println(">>> Looked up the File for the part: " + file);
 
-		// TODO: Multicast for Available Space
+		// At this point we either have the file or we don't.
+		// If we don't have the file we don't know how large it is.
+		// Thus its impossible to know how much space to request.
+		// Fortunately, our algorithm right now assumes you always have
+		// enough space... But in the real world, this wouldn't be available.
+		// TODO: Somehow know how big the file needs to be? Store in MasterListMessage and then Inventory?
+		int size = (file == null) ? 0 : (int)file.length();
 
-		// TODO: Choose a node
-		NodeHandle choosen = null;
-		// modify newParts;
 
-		// TODO: Update the DHT list
+		// Multicast for Available Space, get 1 node back
+		NodeHandle[] storageNode = m_delegate.requestSpace(1, size, oldPartList);
+		NodeHandle choosen = storageNode[0];
+		System.out.println(">>> Requested space, got back: " + choosen.getId().toStringFull());
+
+		// Update the MasterListMessage
+		oldPartList.set( oldPartList.indexOf(m_died), choosen);
+		mlm.setParts(newParts);
+		System.out.println(">>> Updated the MasterList in memory");
+
+		// Update the DHT
 		m_delegate.updateMasterList(lookupId, mlm.getParts());
-		System.out.println(">>> Updated the MasterList");
+		System.out.println(">>> Updated the MasterList in the DHT");
 
-		// TODO: Send Recover Message to the "previous" of dead node
+		// TODO: Have the recovering node cascade the file (this is foolproof?)
 		RecoverMessage recoverMessage = new RecoverMessage(me, m_part, choosen);
 		m_delegate.routeMessageDirect(recoverMessage, prevNode);
+		System.out.println(">>> Sent the RecoverMessage to " + prevNode.getId().toStringFull());
 
-		// TODO: Send MasterListMessage to the new replacement node
-		mlm.setParts(newParts);
+		// Send MasterListMessage to the new replacement node
 		m_delegate.routeMessageDirect(mlm, choosen);
+		System.out.println(">>> Sent the MasterListMessage to " + choosen.getId().toStringFull());
 
-		// TODO: Send the component to the replacement node
+		// Fix our own inventory to point to the new previous node
+		m_delegate.setPreviousNodeForPart(choosen, m_part);
+		System.out.println(">>> Updated our own table to have the new previous for this part be " + choosen.getId().toStringFull());
+
+
+		// Send the component to the replacement node
+		// NOTE: if file is null this will fail.  We Need a special case
+		// NOTE: See the earlier TODO about the RecoverMessage
+		if ( file == null ) {
+			System.out.println(">>> We don't even have the file... HANDLE THIS LATER.");
+		} else {
+			ByteBuffer buf = BufferUtils.getBufferForFile(file.getAbsolutePath(), size, m_part);
+			m_delegate.sendBufferToNode(buf, choosen);
+			System.out.println(">>> Sent the File Data to " + choosen.getId().toStringFull());
+		}
 
 	}
 
