@@ -6,6 +6,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
+
+import chunker.Chunker;
 
 import rice.Continuation;
 import rice.p2p.commonapi.Application;
@@ -403,6 +407,8 @@ public class RaidsApp implements Application {
 
     	// Was this an expected file for a download? Null or otherwise report it!
     	synchronized (m_expectedParts) {
+    		tempFile.
+    		
     		if ( m_expectedParts.containsKey(partIndicator) ) {
     			debug("Received Expected part: " + partIndicator);
         		expectedPartDownloaded(partIndicator, tempFile);
@@ -790,10 +796,32 @@ public class RaidsApp implements Application {
     	}
 
     	// All Good
-    	System.out.println("ENOUGH PARTS SUCCESSFULLY DOWNLOADED!!!!");
-    	// TODO: Verify the file.
-    	// TODO: Reassemble the file.
+    	debug("ENOUGH PARTS SUCCESSFULLY DOWNLOADED!!!!");
 
+    	// Reassemble file
+    	int numberOfChunks = m_expectedParts.size();
+    	String[] fileChunks = new String[ numberOfChunks ];
+    	String iPath = null;
+    	
+    	Set<Entry<PartIndicator, File>> partsAndFiles = m_expectedParts.entrySet();
+    	for( Entry<PartIndicator, File> entry : partsAndFiles ) {
+    		PartIndicator pi = entry.getKey();
+    		File file = entry.getValue();
+    		fileChunks[ pi.getPartNum() ] = file.getName();
+    		if( iPath == null ) {
+    			iPath = file.getParentFile().getAbsolutePath();
+    		}
+    	}
+    	
+    	debug( "Path to chunks: " + iPath );
+    	for( String s : fileChunks ) {
+    		debug( "Chunks to assemble: " + s );
+    	}
+    	
+    	Chunker.reassemble(iPath, fileChunks, "C:\\", "download.txt");
+    	
+    	System.out.println("FINISHED ASSEMBLING FILE.");
+    	
     }
 
 
