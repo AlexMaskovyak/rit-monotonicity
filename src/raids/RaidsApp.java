@@ -27,7 +27,8 @@ import eve.EveType;
 
 /**
  * Our Application.
- * Rides on top of a Past Implementation
+ * Uses a Past for a DHT, Scribe for Multicast, and our own
+ * Application "MyApp" for Transferring Files and Messages.
  *
  * @author Kevin Cheek
  * @author Alex Maskovyak
@@ -54,10 +55,10 @@ public class RaidsApp implements Application {
 	 * Structure to store information regarding the storage of a file piece
 	 * both locally and within other Masters in the ring responsible for this
 	 * piece.
+	 *
 	 * @author Kevin Cheek
 	 * @author Alex Maskovyak
 	 * @author Joe Pecoraro
-	 *
 	 */
 	private class MasterListFilePieceInfo {
 

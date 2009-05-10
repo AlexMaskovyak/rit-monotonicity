@@ -53,6 +53,7 @@ public class StorageApp implements ScribeClient, Application {
 	 * @param reporter an EveReporter for logging
 	 */
 	public StorageApp(Node node, EveReporter reporter) {
+
 		this.m_endpoint = node.buildEndpoint(this, "StorageApp");
 
 		// construct Scribe
@@ -60,7 +61,7 @@ public class StorageApp implements ScribeClient, Application {
 
 		// Build a topic for publish/subscribe
 		m_topic = new Topic(new PastryIdFactory(node.getEnvironment()), "storage request");
-		System.out.println("myTopic = " + m_topic);
+		// System.out.println("myTopic = " + m_topic);
 
 		//Register the end point since we are not using the one from past.
 		m_endpoint.register();
