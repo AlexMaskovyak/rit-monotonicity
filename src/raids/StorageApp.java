@@ -121,21 +121,20 @@ public class StorageApp implements ScribeClient, Application {
 	 * @param message 	The message content.
 	 */
 	public void deliver(Id id, Message message) {
-		//TODO: Add instance of check for open socket request
 		if( message instanceof StorageRequest ){
+			StorageRequest request = (StorageRequest) message;
 			if( m_response > 0 ){
-				m_nodes[ --m_response ] = ((StorageRequest) message).getResponse();
-				m_reporter.log(
-						((StorageRequest) message).getResponse().getId().toStringFull(),
+				m_nodes[ --m_response ] = request.getResponse();
+				m_reporter.log(request.getResponse().getId().toStringFull(),
 						m_node.getId().toStringFull(), EveType.MSG,
 						"Storage Response");
-				//System.out.println("Got Storage Response: " + ((StorageRequest) message).getFrom().getId());
-			}else{
-				m_isDone = true;
+				if ( m_response == 0) {
+					m_isDone = true;
+				}
 			}
 		}
-
 	}
+
 
 	/**
 	 * This method is called when the node received a multicast message. If the message
@@ -147,17 +146,15 @@ public class StorageApp implements ScribeClient, Application {
 	 */
 	public void deliver(Topic topic, ScribeContent content) {
 		if( content instanceof StorageRequest ){
-			//System.out.println("Got Storage Request... Sending response");
-
-			//TODO: Add check for available storage space
-
-			m_reporter.log(
-					((StorageRequest) content).getFrom().getId().toStringFull(),
-					m_node.getId().toStringFull(), EveType.MSG,
-					"ScribeMulticast");
-			StorageRequest c = (StorageRequest) content;
-			c.setResponse(m_node.getLocalNodeHandle());
-			m_endpoint.route(null, c, ((StorageRequest) content).getFrom());
+			StorageRequest request = (StorageRequest) content;
+			if ( !request.getExcluded().contains(m_node.getLocalNodeHandle()) ) {
+				// TODO: Add check for available storage space
+				request.setResponse(m_node.getLocalNodeHandle());
+				m_endpoint.route(null, request, ((StorageRequest) content).getFrom());
+				m_reporter.log(request.getFrom().getId().toStringFull(),
+						m_node.getId().toStringFull(), EveType.MSG,
+						"ScribeMulticast");
+			}
 		}
 	}
 
