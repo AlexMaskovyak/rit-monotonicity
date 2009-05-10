@@ -856,6 +856,9 @@ public class RaidsApp implements Application {
     	// Too many missing files to reassemble
     	if (missingFiles > 1) {
     		debug("TOO MANY MISSING FILES. YOU'RE DOOMED.");
+    		m_expectedReassembledFileName = null;
+        	m_expectedParts.clear();
+        	removeTempFileParts();
     		return;
     	}
 
@@ -897,6 +900,9 @@ public class RaidsApp implements Application {
     	File reassembledFile = new File( outPath + m_expectedReassembledFileName );
     	if( !reassembledFile.exists() ) {
     		debug( "REASSEMBLED FILE DOESN'T EXIST!  ERROR OCCURRED SOMEWHERE!");
+    	   	m_expectedReassembledFileName = null;
+        	m_expectedParts.clear();
+        	removeTempFileParts();
     		return;
     	}
 
@@ -914,6 +920,9 @@ public class RaidsApp implements Application {
 
     	if( !reassembledHash.equals( originalHash ) ) {
     		debug( "REASSEMBLED FILE'S HASH IS INCORRECT!  RECOMMENDATION: ATTEMPT REDOWNLOAD" );
+    	   	m_expectedReassembledFileName = null;
+        	m_expectedParts.clear();
+        	removeTempFileParts();
     		return;
     	}
 
@@ -923,9 +932,17 @@ public class RaidsApp implements Application {
 
     	m_expectedReassembledFileName = null;
     	m_expectedParts.clear();
-
+    	removeTempFileParts();
     }
 
+    /**
+     * Remove the temporary files created from a download operation.
+     */
+    private void removeTempFileParts() {
+    	for( File f : m_expectedParts.values() ) {
+    		f.delete();
+    	}
+    }
 
 //	Node Death
 
