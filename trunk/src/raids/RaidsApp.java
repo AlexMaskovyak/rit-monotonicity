@@ -407,7 +407,6 @@ public class RaidsApp implements Application {
 
     	// Was this an expected file for a download? Null or otherwise report it!
     	synchronized (m_expectedParts) {
-    		tempFile.
     		
     		if ( m_expectedParts.containsKey(partIndicator) ) {
     			debug("Received Expected part: " + partIndicator);
