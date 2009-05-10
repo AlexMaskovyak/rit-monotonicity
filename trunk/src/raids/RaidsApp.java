@@ -407,7 +407,7 @@ public class RaidsApp implements Application {
 
     	// Was this an expected file for a download? Null or otherwise report it!
     	synchronized (m_expectedParts) {
-    		
+
     		if ( m_expectedParts.containsKey(partIndicator) ) {
     			debug("Received Expected part: " + partIndicator);
         		expectedPartDownloaded(partIndicator, tempFile);
@@ -784,6 +784,7 @@ public class RaidsApp implements Application {
     	int missingFiles = 0;
     	for (PartIndicator pi : m_expectedParts.keySet()) {
 			if ( m_expectedParts.get(pi).equals(MISSING_FILE) ) {
+				m_expectedParts.put(pi, null);
 				missingFiles++;
 			}
 		}
@@ -801,7 +802,7 @@ public class RaidsApp implements Application {
     	int numberOfChunks = m_expectedParts.size();
     	String[] fileChunks = new String[ numberOfChunks ];
     	String iPath = null;
-    	
+
     	Set<Entry<PartIndicator, File>> partsAndFiles = m_expectedParts.entrySet();
     	for( Entry<PartIndicator, File> entry : partsAndFiles ) {
     		PartIndicator pi = entry.getKey();
@@ -811,16 +812,16 @@ public class RaidsApp implements Application {
     			iPath = file.getParentFile().getAbsolutePath();
     		}
     	}
-    	
+
     	debug( "Path to chunks: " + iPath );
     	for( String s : fileChunks ) {
     		debug( "Chunks to assemble: " + s );
     	}
-    	
-    	Chunker.reassemble(iPath, fileChunks, "/", "download.txt");
-    	
+
+    	Chunker.reassemble(iPath + "/", fileChunks, "/", "download.txt");
+
     	System.out.println("FINISHED ASSEMBLING FILE.");
-    	
+
     }
 
 
