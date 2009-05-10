@@ -209,7 +209,7 @@ public class RaidsApp implements Application {
 
     /** Allows others to know when new requests can be made */
     private boolean m_readyForNewDownloadRequests;
-    
+
     /**
      * Basic Constructor that rides on top of the PastImpl Constructor
      * @param node the Pastry Node this wraps
@@ -231,13 +231,13 @@ public class RaidsApp implements Application {
         m_masterList = null;
         m_heartHandler = new HeartHandler(this);
         m_inventory = new HashMap<PartIndicator, MasterListFilePieceInfo>();
-        
+
         // set when downloading is to occur
         m_expectedParts = new HashMap<PartIndicator, File>();
         m_expectedReassembledFileName = null;
         m_expectedPartOwners = null;
         m_readyForNewDownloadRequests = true;
-        
+
         // Setup an EveReporter
         if ( eveHost == null ) {
             m_reporter = new EveReporter(); // Does nothing
@@ -393,7 +393,7 @@ public class RaidsApp implements Application {
      */
     public MasterListMessage updateMasterList(final Id fileId, List<NodeHandle>[] list) {
     	MasterListMessage mlm = new MasterListMessage(fileId, list);
-    	m_past.insert(mlm, new Continuation<Boolean[], Exception>() {
+    	m_past.reInsert(fileId, new Continuation<Boolean[], Exception>() {
             public void receiveException(Exception e) { e.printStackTrace(); }
             public void receiveResult(Boolean[] res) {
                 Boolean[] results = ((Boolean[]) res);
@@ -654,7 +654,7 @@ public class RaidsApp implements Application {
     }
 
 	/**
-	 * Determines whether the application is currently serving a download 
+	 * Determines whether the application is currently serving a download
 	 * request.
 	 * @return True if the app can service a new download request, false
 	 * 		 	otherwise.
@@ -662,7 +662,7 @@ public class RaidsApp implements Application {
 	public boolean isReadyForNewDownloadRequests() {
 		return m_expectedParts.isEmpty();
 	}
-	
+
     /**
      * Whenever Messages pass through this node
      */
@@ -839,7 +839,7 @@ public class RaidsApp implements Application {
     private void allPartsDownloaded() {
 
     	m_readyForNewDownloadRequests = true;
-    	
+
     	// Count missing files, ones that couldn't be downloaded because no-one had them
     	int missingFiles = 0;
     	for (PartIndicator pi : m_expectedParts.keySet()) {
@@ -916,10 +916,10 @@ public class RaidsApp implements Application {
     	debug( String.format(
     			"DOWNLOAD, REASSEMBLY AND VERIFICATION COMPLETE FOR: '%s'",
     			reassembledFile.getAbsolutePath() ) );
-    	
+
     	m_expectedReassembledFileName = null;
     	m_expectedParts.clear();
-    	
+
     }
 
 
