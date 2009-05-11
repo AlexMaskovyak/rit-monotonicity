@@ -513,7 +513,7 @@ public class RaidsApp implements Application {
             m_heartHandler.receivedHeartbeatFrom(thumper);
             m_reporter.log(thumper.getId().toStringFull(),
             		m_node.getId().toStringFull(),
-            		EveType.MSG, "Heartbeat");
+            		EveType.HEARTBEAT, "Heartbeat");
         }
 
         // Self Reminder Message - Send Heartbeat Thumps
@@ -623,7 +623,10 @@ public class RaidsApp implements Application {
 	        	ByteBuffer buf = BufferUtils.getBufferForFile(filename, maxSize + PartIndicator.SIZE, dlmsg.getPartIndicator());
 	        	buf.flip();
 	        	debug("Sending: " + dlmsg.getPartIndicator() + " to " + requester.getId().toStringFull());
+
 	        	sendBufferToNode(buf, requester);
+
+
         	}
 
         }
@@ -732,6 +735,7 @@ public class RaidsApp implements Application {
      * @param nh the node to send the data to
      */
     public void sendBufferToNode(ByteBuffer buf, NodeHandle nh) {
+    	//TODO: Add sending file to blah with for direction
     	m_myapp.sendBufferToNode(buf, nh);
     }
 
@@ -745,7 +749,7 @@ public class RaidsApp implements Application {
      */
     public void setExpectedParts(String fileId, int parts, List<NodeHandle>[] owners) {
     	// copy of owners so that we can remove without incident
-    	m_expectedPartOwners = new ArrayList[ owners.length ];    	
+    	m_expectedPartOwners = new ArrayList[ owners.length ];
     	for( int i = 0; i < owners.length; ++i ) {
     		m_expectedPartOwners[ i ] = new ArrayList( owners[ i ] );
     	}
