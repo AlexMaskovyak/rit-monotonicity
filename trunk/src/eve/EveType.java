@@ -5,6 +5,7 @@ package eve;
  * to Eve for different reasons.
  *
  * @author Joseph Pecoraro
+ * @author Kevin Cheek
  */
 public enum EveType {
 
@@ -17,8 +18,17 @@ public enum EveType {
 	/** Register Message (so Eve has a Map of Id to Names) */
 	REGISTER,
 
-	/** A message is on route */
-	FORWARD,
+	/** File chunk is being uploaded */
+	UPLOAD,
+
+	/** File chunk is being downloaded */
+	DOWNLOAD,
+
+	/** Heart beat message */
+	HEARTBEAT,
+
+	FORWARD
+
 
 
 }

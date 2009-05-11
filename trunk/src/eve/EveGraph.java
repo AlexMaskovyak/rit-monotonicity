@@ -1,22 +1,29 @@
 package eve;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Paint;
+import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
 
+import org.apache.commons.collections15.Transformer;
 import org.apache.commons.collections15.functors.ConstantTransformer;
 
+import edu.uci.ics.jung.algorithms.filters.EdgePredicateFilter;
 import edu.uci.ics.jung.algorithms.layout.AbstractLayout;
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
 import edu.uci.ics.jung.algorithms.layout.Layout;
@@ -25,11 +32,13 @@ import edu.uci.ics.jung.algorithms.layout.StaticLayout;
 import edu.uci.ics.jung.algorithms.layout.util.Relaxer;
 import edu.uci.ics.jung.algorithms.layout.util.VisRunner;
 import edu.uci.ics.jung.algorithms.util.IterativeContext;
+import edu.uci.ics.jung.graph.DirectedSparseMultigraph;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.ObservableGraph;
 import edu.uci.ics.jung.graph.UndirectedSparseMultigraph;
 import edu.uci.ics.jung.graph.event.GraphEvent;
 import edu.uci.ics.jung.graph.event.GraphEventListener;
+import edu.uci.ics.jung.graph.util.EdgeType;
 import edu.uci.ics.jung.graph.util.Graphs;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
@@ -64,13 +73,15 @@ public class EveGraph extends JApplet {
     /** ??? */
     Integer v_prev = null;
 
+    private HashMap<Integer, EveType> m_strokeType = null;
     /**
      * Initialization
      */
     public void init() {
+    	m_strokeType = new HashMap<Integer, EveType>();
 
         // Create a graph
-    	Graph<Number,Number> ig = Graphs.<Number,Number>synchronizedUndirectedGraph(new UndirectedSparseMultigraph<Number,Number>());
+    	Graph<Number,Number> ig = Graphs.<Number,Number>synchronizedDirectedGraph(new DirectedSparseMultigraph<Number,Number>());
         ObservableGraph<Number,Number> og = new ObservableGraph<Number,Number>(ig);
 
         // Listener that detects Graph Events
@@ -107,7 +118,7 @@ public class EveGraph extends JApplet {
         m_viewer.setGraphMouse(new DefaultModalGraphMouse<Number,Number>());
         m_viewer.getRenderer().getVertexLabelRenderer().setPosition(Renderer.VertexLabel.Position.CNTR);
         m_viewer.getRenderContext().setVertexLabelTransformer(new ToStringLabeller<Number>());
-        m_viewer.setForeground(Color.white);
+        m_viewer.setForeground(Color.black); //Color for the test b/c the rest all have transfomers
         m_viewer.addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent event) {
 				super.componentResized(event);
@@ -141,7 +152,6 @@ public class EveGraph extends JApplet {
     							staticLayout);
     				Animator animator = new Animator(lt);
     				animator.start();
-    			//	vv.getRenderContext().getMultiLayerTransformer().setToIdentity();
     				m_viewer.repaint();
 
                 } else {
@@ -168,6 +178,59 @@ public class EveGraph extends JApplet {
         // Finalize the GUI
         getContentPane().add(switchLayout, BorderLayout.SOUTH);
 
+
+
+		float dash[] = { 10.0f };
+		final Stroke edgeStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, dash, 0.0f);
+		final Stroke normStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,  BasicStroke.JOIN_MITER, 10.0f);
+		Transformer<Number, Stroke> edgeStrokeTransformer = new Transformer<Number, Stroke>() {
+			@Override
+			public Stroke transform(Number arg0) {
+				switch( m_strokeType.get(arg0) ){
+					case HEARTBEAT:
+						return edgeStroke;
+					default:
+						return normStroke;
+				}
+
+			}
+		};
+
+		Transformer< Number, Paint> edgePaintTransformer = new Transformer<Number, Paint>(){
+			public Paint transform( Number arg0){
+				switch( m_strokeType.get(arg0) ){
+					case UPLOAD:
+						return Color.red;
+
+					case DOWNLOAD:
+						return Color.green;
+
+					default:
+						return Color.black;
+				}
+			}
+		};
+
+		Transformer< Number, String> edgeLabelTransformer = new Transformer<Number, String>(){
+			public String transform( Number arg0){
+				switch( m_strokeType.get(arg0) ){
+					case UPLOAD:
+						return "Upload";
+
+					case DOWNLOAD:
+						return "Download";
+
+					default:
+						return "Test";
+				}
+			}
+		};
+
+
+		m_viewer.getRenderContext().setEdgeStrokeTransformer(edgeStrokeTransformer);
+		m_viewer.getRenderContext().setEdgeDrawPaintTransformer(edgePaintTransformer);
+		m_viewer.getRenderContext().setEdgeLabelTransformer(edgeLabelTransformer);
+	//	m_viewer.getRenderContext().setEdge
     }
 
 
@@ -180,56 +243,6 @@ public class EveGraph extends JApplet {
 
 
 
-    public void process() {
-
-    	m_viewer.getRenderContext().getPickedVertexState().clear();
-    	m_viewer.getRenderContext().getPickedEdgeState().clear();
-        try {
-
-            if (m_graph.getVertexCount() < 100) {
-                //add a vertex
-                Integer v1 = new Integer(m_graph.getVertexCount());
-
-                m_graph.addVertex(v1);
-                m_viewer.getRenderContext().getPickedVertexState().pick(v1, true);
-
-                // wire it to some edges
-                if (v_prev != null) {
-                	Integer edge = m_graph.getEdgeCount();
-                	m_viewer.getRenderContext().getPickedEdgeState().pick(edge, true);
-                    m_graph.addEdge(edge, v_prev, v1);
-                    // let's connect to a random vertex, too!
-                    int rand = (int) (Math.random() * m_graph.getVertexCount());
-                    edge = m_graph.getEdgeCount();
-                	m_viewer.getRenderContext().getPickedEdgeState().pick(edge, true);
-                   m_graph.addEdge(edge, v1, rand);
-                }
-
-                v_prev = v1;
-
-                m_layout.initialize();
-
-        		Relaxer relaxer = new VisRunner((IterativeContext)m_layout);
-        		relaxer.stop();
-        		relaxer.prerelax();
-        		StaticLayout<Number,Number> staticLayout =
-        			new StaticLayout<Number,Number>(m_graph, m_layout);
-				LayoutTransition<Number,Number> lt =
-					new LayoutTransition<Number,Number>(m_viewer, m_viewer.getGraphLayout(),
-							staticLayout);
-				Animator animator = new Animator(lt);
-				animator.start();
-//				vv.getRenderContext().getMultiLayerTransformer().setToIdentity();
-				m_viewer.repaint();
-
-            }
-
-        } catch (Exception e) {
-            System.out.println(e);
-            e.printStackTrace();
-        }
-    }
-
 
     /**
      * Add an edge between two vertexes, given by
@@ -238,7 +251,8 @@ public class EveGraph extends JApplet {
      * @param vTo to vertex id
      * @param edgeId give the edge an id
      */
-    public void addEdge( int vFrom, int vTo, int edgeId){
+    public void addEdge( int vFrom, int vTo, int edgeId, EveType type, String label){
+    	m_strokeType.put(edgeId, type);
         m_graph.addEdge(edgeId, vFrom, vTo);
         m_layout.initialize();
 		Relaxer relaxer = new VisRunner((IterativeContext)m_layout);
@@ -250,6 +264,9 @@ public class EveGraph extends JApplet {
 		animator.start();
 		m_viewer.repaint();
     }
+
+
+
 
 
     /**
@@ -266,6 +283,7 @@ public class EveGraph extends JApplet {
 		LayoutTransition<Number,Number> lt = new LayoutTransition<Number,Number>(m_viewer, m_viewer.getGraphLayout(), staticLayout);
 		Animator animator = new Animator(lt);
 		animator.start();
+	//	m_viewer.getRenderer().setVertexRenderer(arg0)
 		m_viewer.repaint();
     }
 
@@ -288,10 +306,10 @@ public class EveGraph extends JApplet {
      * @param from the name of the from vertex
      * @param to the name of the to vertex
      */
-    public void addEdge(String from, String to) {
+    public void addEdge(String from, String to, EveType eveType, String label) {
     	int fromVertex = m_vertex_names.get(from);
     	int toVertex = m_vertex_names.get(to);
-    	addEdge(fromVertex, toVertex, m_graph.getEdgeCount());
+    	addEdge(fromVertex, toVertex, m_graph.getEdgeCount(), eveType, label);
     }
 
 
@@ -311,12 +329,33 @@ public class EveGraph extends JApplet {
     	frame.setVisible(true);
 
     	// Example Timed Events
-    	eve_graph.addVertex("alpha");
+ /*  	eve_graph.addVertex("alpha");
     	Thread.sleep(500);
 		eve_graph.addVertex("beta");
 		Thread.sleep(500);
     	eve_graph.addVertex("gamma");
-    	eve_graph.addEdge("alpha", "gamma");
+    	eve_graph.addEdge("alpha", "gamma");*/
 
     }
+
+    public class HeartBeatRemover {
+        Timer timer;
+
+        public HeartBeatRemover(int seconds) {
+            timer = new Timer();
+            timer.schedule(new HeartBeatRemoverTask(), 1000);
+
+    	}
+
+        class HeartBeatRemoverTask extends TimerTask {
+            public void run() {
+                System.out.format("Time's up!%n");
+                timer.cancel(); //Terminate the timer thread
+            }
+        }
+
+    }
+
 }
+
+
