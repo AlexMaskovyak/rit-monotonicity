@@ -12,20 +12,17 @@ import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.HashMap;
-import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JApplet;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JRootPane;
 
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.collections15.functors.ConstantTransformer;
 
-import edu.uci.ics.jung.algorithms.filters.EdgePredicateFilter;
 import edu.uci.ics.jung.algorithms.layout.AbstractLayout;
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
 import edu.uci.ics.jung.algorithms.layout.Layout;
@@ -37,10 +34,8 @@ import edu.uci.ics.jung.algorithms.util.IterativeContext;
 import edu.uci.ics.jung.graph.DirectedSparseMultigraph;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.ObservableGraph;
-import edu.uci.ics.jung.graph.UndirectedSparseMultigraph;
 import edu.uci.ics.jung.graph.event.GraphEvent;
 import edu.uci.ics.jung.graph.event.GraphEventListener;
-import edu.uci.ics.jung.graph.util.EdgeType;
 import edu.uci.ics.jung.graph.util.Graphs;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
@@ -57,6 +52,9 @@ import edu.uci.ics.jung.visualization.util.Animator;
  * @author Joseph Pecoraro
  */
 public class EveGraph extends JApplet {
+
+	/** Serial number */
+	private static final long serialVersionUID = 4698247817469334573L;
 
 	/** Constant value for edge length */
     public static final int EDGE_LENGTH = 100;
@@ -90,7 +88,8 @@ public class EveGraph extends JApplet {
     /**
      * Initialization
      */
-    public void init() {
+    @Override
+	public void init() {
     	//Initialize the hashmap for storage of edge types
     	m_message = new HashMap<Integer, EveMessage>();
 
@@ -138,6 +137,7 @@ public class EveGraph extends JApplet {
         m_viewer.getRenderContext().setVertexLabelTransformer(new ToStringLabeller<Number>());
         m_viewer.setForeground(Color.black); //Color for the test b/c the rest all have transfomers
         m_viewer.addComponentListener(new ComponentAdapter() {
+			@Override
 			public void componentResized(ComponentEvent event) {
 				super.componentResized(event);
 				System.err.println("resized");
@@ -258,7 +258,8 @@ public class EveGraph extends JApplet {
     /**
      * Start the Applet
      */
-    public void start() {
+    @Override
+	public void start() {
         validate();
     }
 
@@ -339,7 +340,10 @@ public class EveGraph extends JApplet {
     	addEdge(fromVertex, toVertex, m_graph.getEdgeCount(), msg);
     }
 
-
+    /**
+     * A simple storage class for heart beat messages.
+     *
+     */
     private class HeartBeat{
     	private int edgeId;
     	private long timeStamp;
@@ -361,7 +365,13 @@ public class EveGraph extends JApplet {
 		}
     }
 
+    /**
+     * A simple timer task for removing heart beat messages. This is so the display is
+     * not as cluttered.
+     *
+     */
     private class HeartBeatRemoverTask extends TimerTask {
+			@Override
 			public void run() {
             	while( m_heartbeat.peek() != null && System.currentTimeMillis() - m_heartbeat.peek().getTimeStamp() > REMOVALTIME ){
             		m_graph.removeEdge(m_heartbeat.peek().getEdgeId() );
@@ -372,8 +382,6 @@ public class EveGraph extends JApplet {
 
             }
         }
-
-
 
 }
 
