@@ -10,6 +10,8 @@ import java.io.Serializable;
  */
 public class EveMessage implements Serializable {
 
+	private static final long serialVersionUID = -6996458820753824403L;
+
 	/** Sent From */
 	private String m_from;
 
