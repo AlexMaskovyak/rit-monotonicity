@@ -27,8 +27,6 @@ public enum EveType {
 	/** Heart beat message */
 	HEARTBEAT,
 
+	/** Forward message */
 	FORWARD
-
-
-
 }
