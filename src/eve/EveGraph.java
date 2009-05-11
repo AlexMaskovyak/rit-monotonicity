@@ -233,10 +233,13 @@ public class EveGraph extends JApplet {
 		// Add a label to the edge based on the message data.
 		Transformer<Number, String> edgeLabelTransformer = new Transformer<Number, String>() {
 			public String transform(Number arg0) {
-				if( m_message.get(arg0).getData() != null )
-					return m_message.get(arg0).getData();
-				else
-					return "";
+				switch( m_message.get(arg0).getType() ){
+					case UPLOAD:
+					case DOWNLOAD:
+						return m_message.get(arg0).getData();
+					default:
+						return "";
+				}
 			}
 		};
 
