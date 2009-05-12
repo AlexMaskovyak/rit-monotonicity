@@ -5,6 +5,13 @@ import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.Node;
 import rice.pastry.commonapi.PastryIdFactory;
 
+/**
+ * Wraps Pastry's in-built is creation features into a utility.
+ * 
+ * @author Kevin Cheek
+ * @author Alex Maskovyak
+ * @author Joe Pecoraro
+ */
 public class GeneralIdHelper {
 
 	/** Prefix for Personal File List entries in the DHT */
