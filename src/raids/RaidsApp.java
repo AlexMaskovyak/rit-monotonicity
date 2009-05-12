@@ -591,7 +591,7 @@ public class RaidsApp implements Application {
         // DownloadMessage
         else if ( msg instanceof DownloadMessage ) {
         	debug("received DownloadMessage");
-
+        	m_reporter.log( m_node.getId().toStringFull(), ((DownloadMessage)msg).getRequester().getId().toStringFull(), EveType.DOWNLOAD, "");
         	DownloadMessage dlmsg = (DownloadMessage) msg;
         	NodeHandle requester = dlmsg.getRequester();
         	MasterListFilePieceInfo mlfpi = m_inventory.get(dlmsg.getPartIndicator());
@@ -731,7 +731,7 @@ public class RaidsApp implements Application {
      * @param nh the node to send the data to
      */
     public void sendBufferToNode(ByteBuffer buf, NodeHandle nh) {
-    	//TODO: Add sending file to blah with for direction
+    	m_reporter.log(m_node.getId().toStringFull(), nh.getId().toStringFull(), EveType.UPLOAD, "");
     	m_myapp.sendBufferToNode(buf, nh);
     }
 
