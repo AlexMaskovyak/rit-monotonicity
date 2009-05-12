@@ -4,6 +4,14 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+/**
+ * Eve communication class.  Allows an application to easily report events to
+ * a remove Eve instance.
+ * 
+ * @author Kevin Cheek
+ * @author Alex Maskovyak
+ * @author Joe Pecoraro
+ */
 public class EveReporter {
 
 	/** Is this connected */
