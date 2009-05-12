@@ -85,6 +85,9 @@ public class EveGraph extends JApplet {
     /** Amount of time before a heartbeat message is removed */
     private static final long REMOVALTIME = 1500;
 
+    /** A counter of how many edges have been created */
+    private int m_edgeCount = 0;
+
     /**
      * Initialization
      */
@@ -93,9 +96,8 @@ public class EveGraph extends JApplet {
     	//Initialize the hashmap for storage of edge types
     	m_message = new HashMap<Integer, EveMessage>();
 
+    	//Initialize a queue for keeping track of what edges to remove.
     	m_heartbeat = new LinkedBlockingQueue<HeartBeat>();
-
-
 
         // Create a graph
     	Graph<Number,Number> ig = Graphs.<Number,Number>synchronizedDirectedGraph(new DirectedSparseMultigraph<Number,Number>());
@@ -337,7 +339,7 @@ public class EveGraph extends JApplet {
     public void addEdge(String from, String to, EveMessage msg) {
     	int fromVertex = m_vertex_names.get(from);
     	int toVertex = m_vertex_names.get(to);
-    	addEdge(fromVertex, toVertex, m_graph.getEdgeCount(), msg);
+    	addEdge(fromVertex, toVertex, m_edgeCount++, msg);
     }
 
     /**
