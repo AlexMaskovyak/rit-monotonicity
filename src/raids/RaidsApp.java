@@ -207,8 +207,6 @@ public class RaidsApp implements Application {
     /** Expected parts should come from */
     private List<NodeHandle>[] m_expectedPartOwners;
 
-    /** Allows others to know when new requests can be made */
-    private boolean m_readyForNewDownloadRequests;
 
     /**
      * Basic Constructor that rides on top of the PastImpl Constructor
@@ -236,7 +234,6 @@ public class RaidsApp implements Application {
         m_expectedParts = new HashMap<PartIndicator, File>();
         m_expectedReassembledFileName = null;
         m_expectedPartOwners = null;
-        m_readyForNewDownloadRequests = true;
 
         // Setup an EveReporter
         if ( eveHost == null ) {
@@ -705,7 +702,6 @@ public class RaidsApp implements Application {
      * @param nh the NodeHandle to send this message directly to
      */
     public void sendDownloadMessage(DownloadMessage msg, NodeHandle nh) {
-    	m_readyForNewDownloadRequests = false;
     	final PartIndicator pi = msg.getPartIndicator();
     	m_myapp.getEndpoint().route(null, msg, nh, new DeliveryNotification() {
 
@@ -846,8 +842,6 @@ public class RaidsApp implements Application {
      */
     private void allPartsDownloaded() {
 
-    	m_readyForNewDownloadRequests = true;
-
     	// Count missing files, ones that couldn't be downloaded because no-one had them
     	int missingFiles = 0;
     	for (PartIndicator pi : m_expectedParts.keySet()) {
@@ -944,7 +938,9 @@ public class RaidsApp implements Application {
      */
     private void removeTempFileParts() {
     	for( File f : m_expectedParts.values() ) {
-    		f.delete();
+    		if ( f != null && !f.equals(MISSING_FILE) ) { // Should NEVER happen but always be safe with root.
+    			f.delete();
+    		}
     	}
     }
 
