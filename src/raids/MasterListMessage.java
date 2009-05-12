@@ -32,7 +32,8 @@ public class MasterListMessage extends ContentHashPastContent implements Message
     /**
      * Basic Constructor
      *
-     * @param lookupId the Pastry ID that can be used to lookup the current MasterList in the DHT
+     * @param lookupId the Pastry ID that can be used to lookup the current 
+     * MasterList in the DHT
      * @param parts the Map of Part numbers to their list
      */
     public MasterListMessage(Id lookupId, List<NodeHandle>[] parts) {
@@ -82,18 +83,38 @@ public class MasterListMessage extends ContentHashPastContent implements Message
 
 // Getters and Setters
 
+    /**
+     * Obtains the array of chunk holder lists.
+     * @return structure containing a list of the nodes responsible for storing
+     * 			specific pieces of a file.
+     */
     public List<NodeHandle>[] getParts() {
         return m_parts;
     }
 
+    /**
+     * Specifies the array of chunk holder lists.
+     * @param parts structure containing a list of the nodes responsible for
+     * 				storing pieces of a file, where those nodes corresponding
+     * 				to the first index store the first chunk of the file, etc.
+     */
     public void setParts(List<NodeHandle>[] parts) {
         m_parts = parts;
     }
 
+    /**
+     * Obtains the Pastry ID that can be used to lookup the master list in the
+     * DHT.
+     * @return Pastry ID that can be used to lookup the master list.
+     */
     public Id getLookupId() {
         return m_lookupId;
     }
 
+    /**
+     * Specifies the Pastry ID to use to lookup the master list in the DHT.
+     * @param lookupId Pastry ID to use for master list lookup.
+     */
     public void setLookupId(Id lookupId) {
         m_lookupId = lookupId;
     }
