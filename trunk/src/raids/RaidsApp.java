@@ -155,7 +155,7 @@ public class RaidsApp implements Application {
 //	Constants
 
 	/** Indicate a Missing File - Special Case where no-one had the file */
-	private final File MISSING_FILE = new File("/");  // Some Random Directory... Root is easy
+	private final File MISSING_FILE = new File("/"); // random dir, root is easy
 
 // 	Fields
 
@@ -218,7 +218,14 @@ public class RaidsApp implements Application {
      * @param eveHost Eve's hostname
      * @param evePort Eve's port number
      */
-    public RaidsApp(Node node, StorageManager manager, int replicas, String instance, String username, String eveHost, int evePort) {
+    public RaidsApp(
+    		Node node, 
+    		StorageManager manager, 
+    		int replicas, 
+    		String instance, 
+    		String username, 
+    		String eveHost, 
+    		int evePort) {
 
         // Set States
         m_dead = false;
@@ -243,7 +250,11 @@ public class RaidsApp implements Application {
         }
 
         // Register Name:Id pair with Eve
-        m_reporter.log(username, null, EveType.REGISTER, m_node.getLocalNodeHandle().getId().toStringFull());
+        m_reporter.log(
+        		username, 
+        		null, 
+        		EveType.REGISTER, 
+        		m_node.getLocalNodeHandle().getId().toStringFull());
 
         // Past Application - For a DHT
     	m_past = new PastImpl(node, manager, replicas, instance);
@@ -255,11 +266,17 @@ public class RaidsApp implements Application {
         m_myapp = new MyApp(node, this);
 
         // Reminder to send Heartbeats
-        m_selfTask = m_myapp.getEndpoint().scheduleMessageAtFixedRate( new SelfReminder(),
-        		HeartHandler.INITIAL_SEND_HEARTBEAT, HeartHandler.SEND_HEARTBEAT );
+        m_selfTask = m_myapp.getEndpoint().scheduleMessageAtFixedRate( 
+        		new SelfReminder(),
+        		HeartHandler.INITIAL_SEND_HEARTBEAT, 
+        		HeartHandler.SEND_HEARTBEAT );
 
         // Setup the PersonalFileList
-        Id storageId = GeneralIdHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
+        Id storageId = 
+        	GeneralIdHelper.personalFileListIdForUsername(
+        		m_username, 
+        		m_node.getEnvironment());
+        
         m_past.lookup(storageId, new Continuation<PastContent, Exception>() {
             public void receiveException(Exception e) { e.printStackTrace(); }
             public void receiveResult(PastContent result) {
@@ -267,7 +284,8 @@ public class RaidsApp implements Application {
                     if ( result == null ) {
                         m_personalFileList = new ArrayList<PersonalFileInfo>();
                     } else {
-                        m_personalFileList = ((PersonalFileListContent)result).getList();
+                        m_personalFileList = 
+                        	((PersonalFileListContent)result).getList();
                     }
                 }
             }
@@ -282,7 +300,10 @@ public class RaidsApp implements Application {
      * Grab the latest Personal File List (asynchronous)
      */
     public void lookupPersonalFileList() {
-        Id storageId = GeneralIdHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
+        Id storageId = 
+        	GeneralIdHelper.personalFileListIdForUsername(
+        			m_username, 
+        			m_node.getEnvironment());
         m_past.lookup(storageId, new Continuation<PastContent, Exception>() {
             public void receiveException(Exception e) {}
             public void receiveResult(PastContent result) {
@@ -290,7 +311,8 @@ public class RaidsApp implements Application {
                     if ( result == null ) {
                         m_personalFileList = new ArrayList<PersonalFileInfo>();
                     } else {
-                        m_personalFileList = ((PersonalFileListContent)result).getList();
+                        m_personalFileList = 
+                        	((PersonalFileListContent)result).getList();
                     }
                 }
             }
@@ -304,8 +326,12 @@ public class RaidsApp implements Application {
      */
     public void updatePersonalFileList(List<PersonalFileInfo> list) {
         m_personalFileList = list;
-        Id storageId = GeneralIdHelper.personalFileListIdForUsername(m_username, m_node.getEnvironment());
-        PersonalFileListContent pfl = new PersonalFileListContent(storageId, m_personalFileList);
+        Id storageId = 
+        	GeneralIdHelper.personalFileListIdForUsername(
+        			m_username, 
+        			m_node.getEnvironment());
+        PersonalFileListContent pfl = 
+        	new PersonalFileListContent( storageId, m_personalFileList );
         m_past.insert(pfl, new Continuation<Boolean[], Exception>() {
             public void receiveException(Exception e) { e.printStackTrace(); }
             public void receiveResult(Boolean[] res) {
@@ -317,7 +343,9 @@ public class RaidsApp implements Application {
                         numSuccess++;
                     }
                 }
-                System.out.println("Successfully stored PersonalFileList for " + m_username + " at " + numSuccess + " locations.");
+                System.out.println(
+                		"Successfully stored PersonalFileList for " 
+                		+ m_username + " at " + numSuccess + " locations.");
             }
         });
     }
@@ -331,7 +359,11 @@ public class RaidsApp implements Application {
      * @return the Master List as it was stored in the DHT
      */
     public MasterListMessage lookupMasterList(String filename) {
-    	Id fileId = GeneralIdHelper.masterListIdForFilename(filename, m_username, m_node.getEnvironment());
+    	Id fileId = 
+    		GeneralIdHelper.masterListIdForFilename(
+    				filename, 
+    				m_username, 
+    				m_node.getEnvironment());
     	return lookupMasterList(fileId);
     }
 
@@ -377,8 +409,15 @@ public class RaidsApp implements Application {
      * @param filename the filename the Master List is for
      * @param list the new Master List
      */
-    public MasterListMessage updateMasterList(String filename, List<NodeHandle>[] list) {
-    	Id fileId = GeneralIdHelper.masterListIdForFilename(filename, m_username, m_node.getEnvironment());
+    public MasterListMessage updateMasterList(
+    		String filename, 
+    		List<NodeHandle>[] list) {
+    	
+    	Id fileId = 
+    		GeneralIdHelper.masterListIdForFilename(
+    				filename, 
+    				m_username, 
+    				m_node.getEnvironment());
     	return updateMasterList(fileId, list);
     }
 
@@ -388,8 +427,11 @@ public class RaidsApp implements Application {
      * @param fileId id of the Pastry Filename
      * @param list the new Master List
      */
-    public MasterListMessage updateMasterList(final Id fileId, List<NodeHandle>[] list) {
-    	MasterListMessage mlm = new MasterListMessage(fileId, list);
+    public MasterListMessage updateMasterList(
+    		final Id fileId, 
+    		List<NodeHandle>[] list) {
+    	
+    	MasterListMessage mlm = new MasterListMessage( fileId, list );
     	m_past.insert(mlm, new Continuation<Boolean[], Exception>() {
             public void receiveException(Exception e) { e.printStackTrace(); }
             public void receiveResult(Boolean[] res) {
@@ -401,7 +443,10 @@ public class RaidsApp implements Application {
                         numSuccess++;
                     }
                 }
-                System.out.println("Successfully stored the MasterListContent for " + fileId.toString() + " at " + numSuccess + " locations.");
+                System.out.println(
+                		"Successfully stored the MasterListContent for " 
+                		+ fileId.toString() + " at " 
+                		+ numSuccess + " locations.");
             }
         });
 
@@ -432,7 +477,7 @@ public class RaidsApp implements Application {
 
     	// If the file was null then we can ignore it
     	if ( tempFile == null ) {
-    		debug("WARNING: Ignoreing Empty File sent to use. This should never happen!");
+    		debug("WARNING: Ignoring Empty File sent to use. This should never happen!");
     		return;
     	}
 
@@ -440,17 +485,20 @@ public class RaidsApp implements Application {
     	MasterListFilePieceInfo mlfpi;
     	synchronized (m_inventory) {
 
-    		// NOTE: Possible race condition if you receive the file date faster then the
-    		// MasterListMessage saying you should store it.  This shouldn't happen, but
-    		// its possible.  So, in that case store it anyways.
+    		// NOTE: Possible race condition if you receive the file date faster
+    		// then the MasterListMessage saying you should store it.  This 
+    		// shouldn't happen, but its possible.  So, in that case store it 
+    		// anyways.
         	mlfpi = m_inventory.get(partIndicator);
         	if ( mlfpi == null ) {
         		debug("**** RACE CONDITION? ADDED TO TABLE BEFORE WE NEEDED IT *****");
-        		mlfpi = new MasterListFilePieceInfo(tempFile.getAbsolutePath(), null, null, null, false);
-        		m_inventory.put(partIndicator, mlfpi);
+        		mlfpi = 
+        			new MasterListFilePieceInfo(
+        				tempFile.getAbsolutePath(), null, null, null, false );
+        		m_inventory.put( partIndicator, mlfpi );
         	} else {
         		mlfpi.setLocalPath( tempFile.getAbsolutePath() );
-        		m_inventory.put(partIndicator, mlfpi);
+        		m_inventory.put( partIndicator, mlfpi );
         	}
 
 		}
@@ -464,7 +512,11 @@ public class RaidsApp implements Application {
     		final int maxSize = (int) tempFile.length();
 			new Thread() {
 				public void run() {
-					ByteBuffer buf = BufferUtils.getBufferForFile(filename, maxSize + PartIndicator.SIZE, partIndicator);
+					ByteBuffer buf = 
+						BufferUtils.getBufferForFile(
+								filename, 
+								maxSize + PartIndicator.SIZE, 
+								partIndicator);
 					buf.flip();
 					sendBufferToNode(buf, next);
 				}
@@ -482,9 +534,10 @@ public class RaidsApp implements Application {
      * @param msg the message
      */
     @Override
-    public void deliver(Id id, Message msg) {
+    public void deliver( Id id, Message msg ) {
 
-        // Dead Nodes will still receive messages as long as the environment exists?
+        // Dead Nodes will still receive messages as long as the environment 
+    	// exists?
         if ( m_dead ) {
             debug("I'm dead and received: " + msg);
             return;
@@ -517,11 +570,14 @@ public class RaidsApp implements Application {
         else if ( msg instanceof SelfReminder ) {
 	    	for (final NodeHandle nh : m_heartHandler.getSendingList()) {
 	    		// debug("sending heartbeat to " + nh.getId().toStringFull());
-	    		HeartbeatMessage hb = new HeartbeatMessage(m_node.getLocalNodeHandle());
-	    		m_myapp.getEndpoint().route(null, hb, nh, new DeliveryNotification() {
+	    		HeartbeatMessage hb = 
+	    			new HeartbeatMessage( m_node.getLocalNodeHandle() );
+	    		m_myapp.getEndpoint().route(
+	    				null, hb, nh, new DeliveryNotification() {
 	    			public void sent(MessageReceipt receipt) {}
 					public void sendFailed(MessageReceipt receipt, Exception e) {
-						debug("TOTALLY TIMED OUT A HEARTBEAT WE SENT TO: " + nh.getId().toStringFull());
+						debug("TOTALLY TIMED OUT A HEARTBEAT WE SENT TO: "
+								+ nh.getId().toStringFull());
 						m_heartHandler.stopSendingHeartbeatsTo(nh);
 					}
 	    		});
@@ -622,10 +678,7 @@ public class RaidsApp implements Application {
 	        	debug("Sending: " + dlmsg.getPartIndicator() + " to " + requester.getId().toStringFull());
 
 	        	sendBufferToNode(buf, requester);
-
-
         	}
-
         }
 
         // ...
@@ -731,7 +784,10 @@ public class RaidsApp implements Application {
      * @param nh the node to send the data to
      */
     public void sendBufferToNode(ByteBuffer buf, NodeHandle nh) {
-    	m_reporter.log(m_node.getId().toStringFull(), nh.getId().toStringFull(), EveType.UPLOAD, "");
+    	m_reporter.log(
+    			m_node.getId().toStringFull(), 
+    			nh.getId().toStringFull(), 
+    			EveType.UPLOAD, "");
     	m_myapp.sendBufferToNode(buf, nh);
     }
 
@@ -743,7 +799,11 @@ public class RaidsApp implements Application {
      * @param fileId the file id
      * @param parts the number of parts to expect
      */
-    public void setExpectedParts(String fileId, int parts, List<NodeHandle>[] owners) {
+    public void setExpectedParts(
+    		String fileId, 
+    		int parts, 
+    		List<NodeHandle>[] owners ) {
+    	
     	// copy of owners so that we can remove without incident
     	m_expectedPartOwners = new ArrayList[ owners.length ];
     	for( int i = 0; i < owners.length; ++i ) {
@@ -938,7 +998,8 @@ public class RaidsApp implements Application {
      */
     private void removeTempFileParts() {
     	for( File f : m_expectedParts.values() ) {
-    		if ( f != null && !f.equals(MISSING_FILE) ) { // Should NEVER happen but always be safe with root.
+    		if ( f != null && !f.equals( MISSING_FILE ) ) { 
+    			// Should NEVER happen but always be safe with root.
     			f.delete();
     		}
     	}
@@ -990,7 +1051,10 @@ public class RaidsApp implements Application {
     public File lookupInInventory(PartIndicator pi) {
     	synchronized (m_inventory) {
     		MasterListFilePieceInfo mlfpi = m_inventory.get(pi);
-    		return (mlfpi == null || mlfpi.getLocalPath() == null) ? null : new File(mlfpi.getLocalPath());
+    		return 
+    			(mlfpi == null || mlfpi.getLocalPath() == null) 
+    				? null 
+    				: new File(mlfpi.getLocalPath());
 		}
     }
 
@@ -1029,22 +1093,42 @@ public class RaidsApp implements Application {
 
 // Getters and Setters
 
+    /**
+     * Obtain the user's name.
+     * @return The user's name.
+     */
     public String getUsername() {
         return m_username;
     }
 
+    /**
+     * Specify the user's name.
+     * @param username name for the user.
+     */
     public void setUsername(String username) {
         m_username = username;
     }
 
+    /**
+     * Obtain the Pastry Node object on which this application is installed.
+     * @return Pastry Node.
+     */
     public Node getNode() {
         return m_node;
     }
 
+    /**
+     * Obtain the user's personal file list from local memory.
+     * @return the user's personal file list.
+     */
     public List<PersonalFileInfo> getPersonalFileList() {
         return m_personalFileList;
     }
 
+    /**
+     * Specify the user's personal file list.
+     * @param personalFileList user's personal file list.
+     */
     public void setPersonalFileList(List<PersonalFileInfo> personalFileList) {
         m_personalFileList = personalFileList;
     }
@@ -1058,7 +1142,9 @@ public class RaidsApp implements Application {
      * @param str the string to print
      */
     private void debug(String str) {
-        System.out.println( m_node.getLocalNodeHandle().getId().toStringFull() + ": " + str);
+        System.out.println( 
+        		m_node.getLocalNodeHandle().getId().toStringFull()
+        		+ ": " + str);
     }
 
 }
