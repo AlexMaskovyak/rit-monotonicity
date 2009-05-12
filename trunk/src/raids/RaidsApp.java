@@ -155,7 +155,7 @@ public class RaidsApp implements Application {
 //	Constants
 
 	/** Indicate a Missing File - Special Case where no-one had the file */
-	private File MISSING_FILE = new File("/");  // Some Random Directory... Root is easy
+	private final File MISSING_FILE = new File("/");  // Some Random Directory... Root is easy
 
 // 	Fields
 
