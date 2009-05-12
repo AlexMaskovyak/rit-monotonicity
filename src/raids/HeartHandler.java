@@ -9,8 +9,18 @@ import java.util.TimerTask;
 import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.NodeHandle;
 
+/**
+ * Handles heartbeat communication between nodes in a division group, e.g. nodes 
+ * which share responsibility for storing a file chunk.  Sends heartbeat 
+ * messages and listen to heartbeat messages.  Indicates to an Application 
+ * when a hearbeat stops and action must be taken to ensure the replication
+ * requirements for a chunk are met.
+ * 
+ * @author Kevin Cheek
+ * @author Alex Maskovyak
+ * @author Joe Pecoraro
+ */
 public class HeartHandler {
-
 
 //	Inner Classes
 
