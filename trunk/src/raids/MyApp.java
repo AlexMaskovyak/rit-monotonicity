@@ -15,6 +15,15 @@ import rice.p2p.commonapi.appsocket.AppSocket;
 import rice.p2p.commonapi.appsocket.AppSocketReceiver;
 import util.BufferUtils;
 
+/**
+ * Hack around FreePastry issues associated with sending files and messages to 
+ * NodeHandles in RaidsApp proper.  
+ * 
+ * @author Kevin Cheek
+ * @author Alex Maskovyak
+ * @author Joe Pecoraro
+ *
+ */
 public class MyApp implements Application {
 
 //	Constants
