@@ -740,7 +740,7 @@ public class RaidsApp implements Application {
 
     /**
      * Expecting incoming parts.
-     * @param fildId the file id
+     * @param fileId the file id
      * @param parts the number of parts to expect
      */
     public void setExpectedParts(String fileId, int parts, List<NodeHandle>[] owners) {
