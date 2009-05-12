@@ -50,6 +50,9 @@ public class RaidsApp implements Application {
 	 * @author Joseph Pecoraro
 	 */
 	private class SelfReminder implements Message {
+		/** Generated serial version. */
+		private static final long serialVersionUID = 8826223063019675062L;
+
 		public int getPriority() {
 			return DEFAULT_PRIORITY;
 		}
