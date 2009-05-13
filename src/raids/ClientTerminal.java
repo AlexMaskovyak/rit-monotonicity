@@ -244,7 +244,7 @@ public class ClientTerminal extends Thread {
 				System.err.println("Currently servicing a download request.  Please wait until the current download request finishes.");
 				return;
 			}
-			
+
 			// The Filename
 			String filename = args[0];
 
@@ -412,7 +412,7 @@ public class ClientTerminal extends Thread {
 		System.out.println("  kill [#]           Kills the given node, or the current if none is given");
 		System.out.println("  status             Prints status information on the current node");
 		System.out.println("  switch #           Switches to the given node");
-		System.out.println("  upload path #      Chunks and uploads a file to a # nodes in the network");
+		System.out.println("  upload path #      Chunks and uploads a file to 3*# nodes in the network");
 		System.out.println("  download filename  Downloads the file uploaded by this user with that name");
 		System.out.println("  quit               Exits the client program");
 		System.out.println();
