@@ -152,12 +152,13 @@ public class SHA1 {
 	}
 
 
+	
 	/*-----------------------------
 	 *         In Limbo
 	 *----------------------------- */
 
 
-    public static void hashIntoStream(ByteArrayInputStream inputStream) {
+    /*public static void hashIntoStream(ByteArrayInputStream inputStream) {
     	MessageDigest hash;
 		try {
 			hash = MessageDigest.getInstance("SHA1");
@@ -169,12 +170,9 @@ public class SHA1 {
 		} catch (NoSuchAlgorithmException e1) {
 			e1.printStackTrace();
 		}
-    }
+    }*/
 
-
-
-
-    public static String hash3(String in) throws Exception {
+    /*public static String hash3(String in) throws Exception {
 
         byte[] input = in.getBytes();
         //System.out.println("input     : " + new String(input));
@@ -199,6 +197,6 @@ public class SHA1 {
 
         return convertBytesToHexString( digestOutputStream.getMessageDigest().digest() );
         //System.out.println("out digest: " + new String(digestOutputStream.getMessageDigest().digest()));
-      }
+      } */
 
 }
