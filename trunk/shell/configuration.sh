@@ -49,3 +49,6 @@ echo
 echo " You can view the Javadocs with:"
 echo "   shell> open javadocs/index.html"
 echo
+echo " You can view the Presentations and Research Papers locally with:"
+echo "   shell> open docs/index.html"
+echo
