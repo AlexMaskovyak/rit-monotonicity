@@ -48,6 +48,9 @@ echo
 echo " You can run the client with:"
 echo "   shell> java raids.Client 9000 localhost 9000 axel 10 localhost 9999"
 echo
+echo " You can run the JUnit tests with:"
+echo "   shell> source shell/tests.sh"
+echo
 echo " You can view the Javadocs with:"
 echo "   shell> open javadocs/index.html"
 echo
