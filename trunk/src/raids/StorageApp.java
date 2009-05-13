@@ -20,31 +20,41 @@ import eve.EveType;
 
 /**
  * The storage app is responsible for multi-casting storage requests.
- *
- * @author Kevin Cheek
  * Based on Scribe tutorial
+ * 
+ * @author Kevin Cheek
+ * @author Alex Maskovyak
+ * @author Joe Pecoraro 
  */
 @SuppressWarnings("deprecation")
 public class StorageApp implements ScribeClient, Application {
 
-	//How long the app will wait for a request before timing out
+	/** How long the app will wait for a request before timing out */
 	private static final long m_TIMEOUT = 5000;
 
-	private Scribe m_scribe; //Instance of the scribe implementation
+	/** Instance of the scribe implementation */
+	private Scribe m_scribe; 
 
-	private Topic m_topic; //Topic for the multicasts
+	/** Topic for the multicasts */
+	private Topic m_topic; 
 
-	private Endpoint m_endpoint; //End point for this node
+	/** End point for this node */
+	private Endpoint m_endpoint;
 
-	private boolean m_isDone; //Flag for when a request has completed
+	/** Flag for when a request has completed */
+	private boolean m_isDone;
 
-	private NodeHandle[] m_nodes; //Reference to nodes responding to a request
+	/** Reference to nodes responding to a request */
+	private NodeHandle[] m_nodes;
 
-	private int m_response; //Number of responses requested for a multicast
+	/** Number of responses requested for a multicast */
+	private int m_response;
 
-	private EveReporter m_reporter; //Debugging
+	/** Communicate our messages to Eve for visualization. */
+	private EveReporter m_reporter;
 
-	private Node m_node; //The node this application is attached to
+	/** The node this application is attached to */
+	private Node m_node; 
 
 
 	/**
@@ -172,9 +182,13 @@ public class StorageApp implements ScribeClient, Application {
 
 //	Scribe Interface (can be Ignored)
 
+	/** Scribe interface, can be ignored for our purposes. */
 	public void childAdded(Topic topic, NodeHandle child) {}
+	/** Scribe interface, can be ignored for our purposes. */
 	public void childRemoved(Topic topic, NodeHandle child) {}
+	/** Scribe interface, can be ignored for our purposes. */
 	public void subscribeFailed(Topic topic) {}
+	/** Scribe interface, can be ignored for our purposes. */
 	public boolean anycast(Topic topic, ScribeContent content) {
 		return false;
 	}
@@ -182,9 +196,10 @@ public class StorageApp implements ScribeClient, Application {
 
 //	Application Interface (can be Ignored)
 
+	/** Application interface, can be ignored for our purposes. */
 	public void update(NodeHandle handle, boolean joined) {}
+	/** Application interface, can be ignored for our purposes. */
 	public boolean forward(RouteMessage msg) {
 		return true;
 	}
-
 }
