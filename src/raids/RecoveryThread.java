@@ -9,6 +9,15 @@ import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.NodeHandle;
 import util.BufferUtils;
 
+/**
+ * Recovers from the loss of a node holding a particular chunk of a file.  This
+ * thread obtains a node to replace the lost node and establishes heartbeat 
+ * messages to repair the storage ring.
+ * 
+ * @author Kevin Cheek
+ * @author Alex Maskovyak
+ * @author Joe Pecoraro
+ */
 public class RecoveryThread extends Thread {
 
 	/** The Application to delegate to */
@@ -119,7 +128,7 @@ public class RecoveryThread extends Thread {
 	 * @return the node "before" this node, null if dead was not found
 	 */
 	private NodeHandle getPreviousToDeadNode(List<NodeHandle> list) {
-		int idx = list.indexOf(m_died);
+		int idx = list.indexOf( m_died );
 		if ( idx == -1 ) {
 			return null;
 		} else if ( idx == 0 ) {
