@@ -8,9 +8,14 @@ import rice.p2p.commonapi.Id;
  * PastContent storage data structure that stores a User's List of Files,
  * which are PersonalFileInfo objects.
  *
+ * @author Kevin Cheek
+ * @author Alex Maskovyak
  * @author Joseph Pecoraro
  */
 public class PersonalFileListContent extends PastContentList<PersonalFileInfo> {
+
+	/** Generated serial version */
+	private static final long serialVersionUID = 3421181011400632594L;
 
 	/**
 	 * Default Constructor
