@@ -10,12 +10,12 @@ import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.NodeHandle;
 
 /**
- * Handles heartbeat communication between nodes in a division group, e.g. nodes 
- * which share responsibility for storing a file chunk.  Sends heartbeat 
- * messages and listen to heartbeat messages.  Indicates to an Application 
+ * Handles heartbeat communication between nodes in a division group, e.g. nodes
+ * which share responsibility for storing a file chunk.  Sends heartbeat
+ * messages and listen to heartbeat messages.  Indicates to an Application
  * when a hearbeat stops and action must be taken to ensure the replication
  * requirements for a chunk are met.
- * 
+ *
  * @author Kevin Cheek
  * @author Alex Maskovyak
  * @author Joe Pecoraro
@@ -66,7 +66,7 @@ public class HeartHandler {
 //	Constants
 
 	/** Check Heartbeat Time */
-	public static final int CHECK_HEARTBEAT = 10000; /* 20 seconds */
+	public static final int CHECK_HEARTBEAT = 10000; /* 10 seconds */
 
 	/** Send Heartbeat Thump Time */
 	public static final int SEND_HEARTBEAT = 5000; /* 5 seconds */
