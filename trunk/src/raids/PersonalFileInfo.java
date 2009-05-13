@@ -12,6 +12,7 @@ public class PersonalFileInfo implements Serializable {
 
 	/** File Name */
 	private String m_name;
+	/** File Hash */
 	private String m_hash;
 	
 	/**
