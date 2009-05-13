@@ -9,12 +9,18 @@ import rice.p2p.past.ContentHashPastContent;
 import rice.p2p.past.PastContent;
 
 /**
- * PastContent storage data structure that stores a List of Items.
+ * PastContent storage data structure that stores a List of Items into the Past
+ * DHT.
  *
+ * @author Kevin Cheek
+ * @author Alex Maskovyak
  * @author Joseph Pecoraro
  */
 public class PastContentList<E extends Serializable> extends ContentHashPastContent {
 
+	/** Generated serial version */
+	private static final long serialVersionUID = -291377009943496654L;
+	
 	/** The content of the message */
 	protected List<E> m_list;
 
