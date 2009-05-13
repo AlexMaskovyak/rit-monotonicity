@@ -1,13 +1,8 @@
 package util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.security.DigestInputStream;
-import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -150,53 +145,5 @@ public class SHA1 {
 		}
 		return buf.toString();
 	}
-
-
-	
-	/*-----------------------------
-	 *         In Limbo
-	 *----------------------------- */
-
-
-    /*public static void hashIntoStream(ByteArrayInputStream inputStream) {
-    	MessageDigest hash;
-		try {
-			hash = MessageDigest.getInstance("SHA1");
-			DigestInputStream digestInputStream = new DigestInputStream(inputStream, hash);
-			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-			for (int r; (r=digestInputStream.read())>=0;) { byteArrayOutputStream.write(r); }
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e1) {
-			e1.printStackTrace();
-		}
-    }*/
-
-    /*public static String hash3(String in) throws Exception {
-
-        byte[] input = in.getBytes();
-        //System.out.println("input     : " + new String(input));
-        MessageDigest hash = MessageDigest.getInstance("SHA1");
-
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(input);
-        DigestInputStream digestInputStream = new DigestInputStream(byteArrayInputStream, hash);
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-        int ch;
-        while ((ch = digestInputStream.read()) >= 0) {
-          byteArrayOutputStream.write(ch);
-        }
-
-        byte[] newInput = byteArrayOutputStream.toByteArray();
-        digestInputStream.getMessageDigest().digest();
-
-        byteArrayOutputStream = new ByteArrayOutputStream();
-        DigestOutputStream digestOutputStream = new DigestOutputStream(byteArrayOutputStream, hash);
-        digestOutputStream.write(newInput);
-        digestOutputStream.close();
-
-        return convertBytesToHexString( digestOutputStream.getMessageDigest().digest() );
-        //System.out.println("out digest: " + new String(digestOutputStream.getMessageDigest().digest()));
-      } */
 
 }
