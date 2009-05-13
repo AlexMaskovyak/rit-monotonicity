@@ -15,7 +15,7 @@ SRC_DIR="src"
 source $PROJ_ROOT/shell/classpath.sh
 
 # Compile the java files into the BIN directory
-javac -d bin/                    \
+javac -d bin/                  \
 	$SRC_DIR/chunker/*.java      \
 	$SRC_DIR/eve/*.java          \
 	$SRC_DIR/examples/*.java     \
@@ -24,7 +24,8 @@ javac -d bin/                    \
 	$SRC_DIR/util/*.java
 
 # Run Javadocs
-javadoc -private -d javadocs/    \
+javadoc -private -d javadocs/  \
+	-link http://java.sun.com/javase/6/docs/api/ \
 	$SRC_DIR/chunker/*.java      \
 	$SRC_DIR/eve/*.java          \
 	$SRC_DIR/examples/*.java     \
