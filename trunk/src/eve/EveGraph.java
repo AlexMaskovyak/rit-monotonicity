@@ -238,7 +238,6 @@ public class EveGraph extends JApplet {
 				switch( m_message.get(arg0).getType() ){
 					case UPLOAD:
 					case DOWNLOAD:
-						return m_message.get(arg0).getData();
 					default:
 						return "";
 				}
