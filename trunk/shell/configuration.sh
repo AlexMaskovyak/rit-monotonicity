@@ -15,7 +15,7 @@ SRC_DIR="src"
 source $PROJ_ROOT/shell/classpath.sh
 
 # Compile the java files into the BIN directory
-javac -d bin/                  \
+javac -d $BIN_DIR/             \
 	$SRC_DIR/chunker/*.java      \
 	$SRC_DIR/eve/*.java          \
 	$SRC_DIR/examples/*.java     \
