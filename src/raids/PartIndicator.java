@@ -8,11 +8,16 @@ import java.nio.ByteBuffer;
  * part number.  This doesn't give away the
  * individual chunk's hash.
  *
+ * @author Kevin Cheek
+ * @author Alex Maskovyak
  * @author Joseph Pecoraro
  */
 public class PartIndicator implements Serializable {
 
 //	Constants
+
+	/** Generated serial version */
+	private static final long serialVersionUID = -6173861654592856961L;
 
 	/** The Byte Size of this object */
 	public static int SIZE = 40+4; /* SHA1 String + int */
@@ -100,18 +105,34 @@ public class PartIndicator implements Serializable {
 
 // Getters and Setters
 
+	/**
+	 * Obtains the lookup id for the original file: the hash of its contents.
+	 * @return the lookup id for the original file. 
+	 */
 	public String getLookupId() {
 		return m_lookupId;
 	}
 
+	/**
+	 * Specifies the lookup id for the original file: the hash of its contents.
+	 * @param origHash the lookup id for the original file.
+	 */
 	public void setLookupId(String origHash) {
 		m_lookupId = origHash;
 	}
 
+	/**
+	 * Obtains the part number of the file chunk.
+	 * @return the part number for the file chunk.
+	 */
 	public int getPartNum() {
 		return m_partNum;
 	}
 
+	/**
+	 * Specifies the part number of the file chunk.
+	 * @param partNum the part number of the file chunk.
+	 */
 	public void setPartNum(int partNum) {
 		m_partNum = partNum;
 	}
