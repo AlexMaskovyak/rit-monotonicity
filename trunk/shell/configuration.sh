@@ -25,6 +25,7 @@ javac -d bin/                  \
 
 # Run Javadocs
 javadoc -private -d javadocs/  \
+	-doctitle "RAIDS - Team Monotonicity" \
 	-link http://java.sun.com/javase/6/docs/api/ \
 	$SRC_DIR/chunker/*.java      \
 	$SRC_DIR/eve/*.java          \
