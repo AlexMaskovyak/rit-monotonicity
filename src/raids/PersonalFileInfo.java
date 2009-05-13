@@ -10,6 +10,9 @@ import java.io.Serializable;
  */
 public class PersonalFileInfo implements Serializable {
 
+	/** Generated serial version */
+	private static final long serialVersionUID = 3569418398595232613L;
+	
 	/** File Name */
 	private String m_name;
 	/** File Hash */
